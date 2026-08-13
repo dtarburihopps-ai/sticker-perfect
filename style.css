@@ -1,0 +1,99 @@
+/* Sticker Perfect — вид игры */
+
+/* --- Палитра и размеры в одном месте, чтобы менять быстро --- */
+:root {
+  --paper-dark:  #EFE7D9;  /* поле вокруг сцены */
+  --paper:       #F4EDE2;  /* сцена */
+  --tray-bg:     #E5DBC9;  /* полоса стикеров внизу */
+  --line:        #CFC4B0;  /* тонкие разделители */
+  --icon:        #8A8070;  /* иконки */
+
+  --tray-height: 110px;    /* высота полосы стикеров */
+}
+
+/* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;  /* убирает серую вспышку при тапе */
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;                /* страница не скроллится */
+  overscroll-behavior: none;       /* и не тянется резинкой */
+  background: var(--paper-dark);
+  font-family: system-ui, -apple-system, sans-serif;
+  touch-action: manipulation;      /* убирает задержку 300 мс перед реакцией на тап */
+  user-select: none;               /* долгий тап не выделяет текст */
+  -webkit-user-select: none;
+}
+
+/* --- Экран целиком --- */
+#app {
+  height: 100vh;
+  height: 100dvh;                  /* dvh не скачет, когда прячется адресная строка */
+  display: flex;
+  flex-direction: column;
+  max-width: 520px;                /* на десктопе не растягиваемся на весь монитор */
+  margin: 0 auto;
+}
+
+/* --- Сцена: тут живёт уровень --- */
+#scene {
+  flex: 1;
+  position: relative;
+  background: var(--paper);
+  padding-top: env(safe-area-inset-top);  /* верх не уезжает под шапку телеграма */
+  overflow: hidden;
+}
+
+/* --- Полоса стикеров внизу --- */
+#tray {
+  flex: none;
+  height: var(--tray-height);
+  background: var(--tray-bg);
+  border-top: 1px solid var(--line);
+  padding-bottom: env(safe-area-inset-bottom);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* --- Иконка выключения вибрации: единственная кнопка в игре --- */
+#vibration-toggle {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  right: 10px;
+  width: 44px;                     /* 44px — минимальный удобный размер для пальца */
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--icon);
+  opacity: 0.55;
+  cursor: pointer;
+  transition: opacity 120ms ease-out;
+}
+
+#vibration-toggle:active {
+  opacity: 1;
+}
+
+/* Выключенная вибрация — иконка перечёркнута */
+#vibration-toggle.off {
+  opacity: 0.3;
+}
+
+#vibration-toggle.off::after {
+  content: "";
+  position: absolute;
+  width: 24px;
+  height: 1.6px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
