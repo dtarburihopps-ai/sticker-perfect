@@ -1,5 +1,11 @@
 # -*- coding: utf-8 -*-
 # Собирает игру в один HTML-файл: стили, скрипты и картинки внутри.
+#
+# Зачем: такой файл можно открыть двойным кликом без сервера
+# и опубликовать там, где внешние загрузки запрещены.
+#
+# Запуск: python build.py
+
 import base64
 import io
 import os
@@ -7,9 +13,13 @@ import re
 
 from PIL import Image
 
-BASE = os.path.join(os.path.expanduser("~"), "Desktop", "ВК", "СП")
-IMG = os.path.join(BASE, "images")
-OUT = os.path.dirname(os.path.abspath(__file__))
+BASE = os.path.dirname(os.path.abspath(__file__))
+OUT = os.path.join(BASE, "sticker-perfect.html")
+
+# До какой ширины ужимать картинки. Фон рисуется во весь экран,
+# продукты — мелко, поэтому им хватает меньшего размера.
+WIDTHS = {"fridge": 820, "drawers-front": 700}
+DEFAULT_WIDTH = 260
 
 
 def read(name):
@@ -17,28 +27,33 @@ def read(name):
         return f.read()
 
 
-def data_uri(path, width, quality):
-    img = Image.open(path).convert("RGBA")
+def data_uri(rel_path):
+    img = Image.open(os.path.join(BASE, rel_path)).convert("RGBA")
+    key = os.path.splitext(os.path.basename(rel_path))[0]
+    width = min(WIDTHS.get(key, DEFAULT_WIDTH), img.width)
     height = round(img.height * width / img.width)
+
     img = img.resize((width, height), Image.LANCZOS)
     buf = io.BytesIO()
-    img.save(buf, "WEBP", quality=quality, method=6)
+    img.save(buf, "WEBP", quality=88, method=6)
     raw = buf.getvalue()
-    print("%-12s %4dx%-4d %6.0f КБ" % (os.path.basename(path), width, height, len(raw) / 1024))
+
+    print("%-22s %4dx%-4d %6.0f КБ" % (rel_path, width, height, len(raw) / 1024))
     return "data:image/webp;base64," + base64.b64encode(raw).decode()
 
 
-fridge = data_uri(os.path.join(IMG, "fridge.png"), 820, 86)
-cola = data_uri(os.path.join(IMG, "cola.png"), 240, 92)
-
 css = read("style.css")
 sound = read("sound.js")
-levels = read("levels.js").replace("'images/fridge.png'", "FRIDGE").replace("'images/cola.png'", "COLA")
+levels = read("levels.js")
 game = read("game.js")
+
+# Все пути к картинкам в данных уровня заменяем на сами картинки
+for path in sorted(set(re.findall(r"'(images/[^']+)'", levels))):
+    levels = levels.replace("'%s'" % path, '"%s"' % data_uri(path))
 
 html = read("index.html")
 body = re.search(r"<body>(.*)</body>", html, re.S).group(1)
-body = re.sub(r"\s*<script[^>]*></script>", "", body)
+body = re.sub(r"\s*<script[^>]*></script>", "", body)   # скрипты подключим сами
 
 page = u"""<title>Sticker Perfect</title>
 
@@ -49,13 +64,6 @@ page = u"""<title>Sticker Perfect</title>
 %s
 
 <script>
-// Картинки лежат прямо в странице, чтобы игра открывалась одной ссылкой
-// и ничего не тянула со стороны.
-const FRIDGE = "%s";
-const COLA = "%s";
-</script>
-
-<script>
 %s
 </script>
 
@@ -66,10 +74,9 @@ const COLA = "%s";
 <script>
 %s
 </script>
-""" % (css, body.strip(), fridge, cola, sound, levels, game)
+""" % (css, body.strip(), sound, levels, game)
 
-path = os.path.join(OUT, "sticker-perfect.html")
-with io.open(path, "w", encoding="utf-8") as f:
+with io.open(OUT, "w", encoding="utf-8") as f:
     f.write(page)
 
-print("готово: %.1f МБ" % (os.path.getsize(path) / 1024 / 1024))
+print("\nготово: %s — %.1f МБ" % (os.path.basename(OUT), os.path.getsize(OUT) / 1024 / 1024))

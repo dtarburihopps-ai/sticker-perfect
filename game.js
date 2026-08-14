@@ -49,6 +49,7 @@ const scene = document.getElementById('scene');
 const tray = document.getElementById('tray');
 const background = document.getElementById('background');
 const stickersLayer = document.getElementById('stickers');
+const overlaysLayer = document.getElementById('overlays');
 const vibrationButton = document.getElementById('vibration-toggle');
 
 // --- Вибрация ---
@@ -71,6 +72,7 @@ vibrationButton.addEventListener('click', function () {
 let level = null;      // описание уровня из levels.js
 let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
+let overlays = [];     // куски фона поверх стикеров
 let selected = null;   // какой стикер сейчас выбран
 
 function loadLevel(name) {
@@ -81,6 +83,7 @@ function loadLevel(name) {
 
   buildSlots();
   buildStickers();
+  buildOverlays();
 
   background.addEventListener('load', scheduleLayout);
   scheduleLayout();
@@ -128,6 +131,23 @@ function buildStickers() {
   // Стикеры игрока — в полосе внизу
   level.tray.forEach(function (type) {
     createSticker(type);
+  });
+}
+
+// Куски фона, которые лежат НАД стикерами: передняя стенка ящиков.
+// Ширина задаётся долей от фона, высота подстраивается сама по картинке.
+function buildOverlays() {
+  overlays = [];
+  if (!level.overlays) return;
+
+  level.overlays.forEach(function (data) {
+    const element = document.createElement('img');
+    element.className = 'overlay';
+    element.src = data.image;
+    element.alt = '';
+    overlaysLayer.appendChild(element);
+
+    overlays.push({ x: data.x, y: data.y, width: data.width, element: element });
   });
 }
 
@@ -280,6 +300,12 @@ function layout() {
     slot.element.style.height = height + 'px';
     slot.element.style.left = (box.left + slot.x * box.width) + 'px';
     slot.element.style.top = (box.top + slot.bottom * box.height - height) + 'px';
+  });
+
+  overlays.forEach(function (overlay) {
+    overlay.element.style.left = (scene.offsetLeft + box.left + overlay.x * box.width) + 'px';
+    overlay.element.style.top = (scene.offsetTop + box.top + overlay.y * box.height) + 'px';
+    overlay.element.style.width = (overlay.width * box.width) + 'px';
   });
 
   const waiting = stickers.filter(function (s) { return !s.placed; });
