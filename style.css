@@ -2,20 +2,17 @@
 
 /* --- Палитра, размеры и тайминги в одном месте, чтобы менять быстро --- */
 :root {
-  --paper-dark:  #EFE7D9;  /* поле вокруг сцены */
-  --paper:       #F4EDE2;  /* сцена */
-  --tray-bg:     #E5DBC9;  /* полоса стикеров внизу */
-  --line:        #CFC4B0;  /* тонкие разделители */
-  --icon:        #8A8070;  /* иконки */
-  --zone-bg:     #DED2BC;  /* заглушка зоны */
-  --zone-line:   #C3B69D;
+  --tray-bg:      #E5DBC9;  /* полоса стикеров внизу */
+  --line:         #CFC4B0;  /* тонкие разделители */
+  --icon:         #6E6A63;  /* иконка вибрации */
 
-  --tray-height: 110px;    /* высота полосы стикеров */
+  --tray-height:  110px;
 
-  /* Тайминги — крутим их на задаче 4, пока не станет приятно */
-  --fly-time:    280ms;
-  --fly-curve:   cubic-bezier(0.34, 1.2, 0.64, 1);
-  --stick-time:  220ms;   /* приклеивание */
+  /* Тайминги. Меняешь тут — поменяй и константы в начале game.js */
+  --fly-time:     280ms;
+  --fly-curve:    cubic-bezier(0.34, 1.2, 0.64, 1);
+  --stick-time:   220ms;   /* приклеивание */
+  --reject-time:  150ms;   /* «не туда» */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -30,7 +27,7 @@ html, body {
   height: 100%;
   overflow: hidden;                /* страница не скроллится */
   overscroll-behavior: none;       /* и не тянется резинкой */
-  background: var(--paper-dark);
+  background: #E0DAD2;
   font-family: system-ui, -apple-system, sans-serif;
   touch-action: manipulation;      /* убирает задержку 300 мс перед реакцией на тап */
   user-select: none;               /* долгий тап не выделяет текст */
@@ -53,9 +50,28 @@ html, body {
 #scene {
   flex: 1;
   position: relative;
-  background: var(--paper);
-  padding-top: env(safe-area-inset-top);  /* верх не уезжает под шапку телеграма */
   overflow: hidden;
+}
+
+/* Фон уровня. Ширина и вертикальное положение считаются в game.js */
+#background {
+  position: absolute;
+  left: 0;
+  display: block;
+  pointer-events: none;            /* тапы ловят места, а не картинка */
+}
+
+/* --- Место, куда кладут стикер --- */
+/* Обычно невидимо: игрок целится по картинке, а не по рамке.
+   Рамки включаются флагом SHOW_SLOTS в game.js, когда надо настроить координаты. */
+.slot {
+  position: absolute;
+  cursor: pointer;
+}
+
+.slot.visible {
+  outline: 1px dashed rgba(40, 90, 70, 0.55);
+  background: rgba(80, 160, 130, 0.12);
 }
 
 /* --- Полоса стикеров внизу --- */
@@ -67,25 +83,6 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
-/* --- Зона: место, куда кладут стикер --- */
-.zone {
-  position: absolute;
-  background: var(--zone-bg);
-  border: 1px solid var(--zone-line);
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-/* Заглушка стакана-карандашницы: высокий и узкий.
-   Позиция временная — расставим по-настоящему, когда придёт стол. */
-#zone-cup {
-  width: 56px;
-  height: 110px;
-  left: 50%;
-  top: 42%;
-  transform: translate(-50%, -50%);
-}
-
 /* --- Слой со стикерами --- */
 #stickers {
   position: absolute;
@@ -95,7 +92,7 @@ html, body {
 
 /* --- Стикер --- */
 /* Внешний div отвечает только за положение, внутренний — только за вид.
-   Так полёт и «пружинка» не мешают друг другу: это два разных transform. */
+   Так полёт и приклеивание не дерутся за один и тот же transform. */
 .sticker {
   position: absolute;
   left: 0;
@@ -104,12 +101,17 @@ html, body {
   cursor: pointer;
 }
 
+/* В полёте меняются сразу и положение, и размер: стикер уменьшается
+   с «крупного в полосе» до «настоящего на полке» */
 .sticker.flying {
-  transition: transform var(--fly-time) var(--fly-curve);
+  transition:
+    transform var(--fly-time) var(--fly-curve),
+    width     var(--fly-time) var(--fly-curve),
+    height    var(--fly-time) var(--fly-curve);
 }
 
 /* Приклеенный стикер больше не ловит тапы — иначе он закрывал бы собой
-   часть зоны, и по ней нельзя было бы попасть следующим стикером */
+   место над собой, и туда нельзя было бы попасть следующей банкой */
 .sticker.placed {
   pointer-events: none;
 }
@@ -117,24 +119,29 @@ html, body {
 .sticker-body {
   width: 100%;
   height: 100%;
-  background: #FBF7F0;
-  border: 3px solid #fff;          /* белая рамка — это и делает картинку наклейкой */
-  border-radius: 5px;
-  box-shadow: 0 1px 3px rgba(90, 70, 40, 0.18);
-  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+  /* drop-shadow, а не box-shadow: он обводит саму картинку по прозрачности,
+     а box-shadow нарисовал бы тень прямоугольником вокруг неё */
+  filter: drop-shadow(0 1px 2px rgba(80, 70, 60, 0.28));
+  transition: transform 120ms ease-out, filter 120ms ease-out;
+}
+
+.sticker-body img {
+  width: 100%;
+  height: 100%;
+  display: block;
 }
 
 /* Выбранный стикер слегка приподнимается */
 .sticker.selected .sticker-body {
-  transform: scale(1.06);
-  box-shadow: 0 4px 10px rgba(90, 70, 40, 0.26);
+  transform: scale(1.08);
+  filter: drop-shadow(0 5px 8px rgba(80, 70, 60, 0.34));
 }
 
 /* В полёте стикер приподнят над поверхностью: крупнее и с большой мягкой тенью.
    Именно тень читается глазом как «висит в воздухе». */
 .sticker.flying .sticker-body {
   transform: scale(1.10);
-  box-shadow: 0 10px 16px rgba(90, 70, 40, 0.30);
+  filter: drop-shadow(0 9px 12px rgba(80, 70, 60, 0.32));
 }
 
 /* Приземление: опускается и прижимается, тень схлопывается в тонкую.
@@ -144,8 +151,20 @@ html, body {
 }
 
 @keyframes stick {
-  0%   { transform: scale(1.10); box-shadow: 0 10px 16px rgba(90, 70, 40, 0.30); }
-  100% { transform: scale(1);    box-shadow: 0 1px 3px rgba(90, 70, 40, 0.18); }
+  0%   { transform: scale(1.10); filter: drop-shadow(0 9px 12px rgba(80, 70, 60, 0.32)); }
+  100% { transform: scale(1);    filter: drop-shadow(0 1px 2px rgba(80, 70, 60, 0.28)); }
+}
+
+/* «Не туда»: короткое дрожание. Амплитуда нарочно маленькая —
+   это подсказка «не сюда», а не выговор за ошибку. */
+.sticker.reject .sticker-body {
+  animation: reject var(--reject-time) ease-in-out;
+}
+
+@keyframes reject {
+  0%, 100% { transform: translateX(0)    scale(1.08); }
+  25%      { transform: translateX(-3px) scale(1.08); }
+  75%      { transform: translateX(3px)  scale(1.08); }
 }
 
 /* --- Иконка выключения вибрации: единственная кнопка в игре --- */
@@ -161,10 +180,10 @@ html, body {
   background: none;
   border: none;
   color: var(--icon);
-  opacity: 0.55;
+  opacity: 0.45;
   cursor: pointer;
   transition: opacity 120ms ease-out;
-  z-index: 2;
+  z-index: 3;
 }
 
 #vibration-toggle:active {
@@ -173,7 +192,7 @@ html, body {
 
 /* Выключенная вибрация — иконка перечёркнута */
 #vibration-toggle.off {
-  opacity: 0.3;
+  opacity: 0.28;
 }
 
 #vibration-toggle.off::after {

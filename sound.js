@@ -96,3 +96,10 @@ function playSnap() {
   burst({ filter: 'bandpass', from: 4200, to: 900, time: 0.11, volume: 0.50, delay: 0.018 });
   log('Звук: приклеился');
 }
+
+// «Не туда»: глухой короткий тук, тише приклеивания.
+// Это подсказка «не сюда», а не звук ошибки — поэтому никакой резкости.
+function playReject() {
+  burst({ filter: 'lowpass', from: 700, to: 260, time: 0.06, volume: 0.40 });
+  log('Звук: не туда');
+}
