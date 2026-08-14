@@ -146,7 +146,19 @@ function selectSticker(sticker) {
 
   selected = sticker;
   sticker.element.classList.add('selected');
+  playSelect();
   log('Стикер выбран:', sticker.id);
+}
+
+// Отклик в момент приземления: звук и вибрация вместе.
+// Вибрация работает только внутри Telegram — в браузере её просто нет.
+function feedbackSnap() {
+  playSnap();
+
+  if (vibrationOn && tg && tg.HapticFeedback) {
+    tg.HapticFeedback.impactOccurred('light');
+    log('Вибрация: тук');
+  }
 }
 
 function tapZone(zone) {
@@ -172,10 +184,12 @@ function tapZone(zone) {
 
   log('Летит:', sticker.id, '→', zone.id);
 
-  // Приземление: снимаем режим полёта и пружиним
+  // Приземление. Звук играет ИМЕННО ЗДЕСЬ, а не в момент тапа —
+  // иначе ухо не связывает щелчок с касанием поверхности.
   setTimeout(function () {
     sticker.element.classList.remove('flying');
     sticker.element.classList.add('snap');
+    feedbackSnap();
     log('Приземлился:', sticker.id);
 
     setTimeout(function () {
