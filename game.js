@@ -27,6 +27,7 @@ const TRAY_PADDING = 20;   // отступ от краёв полосы
 // и появляются, когда предыдущие улетели. Без этого девять банок ужимаются
 // до 31 px — мельче, чем они же на полке, и брать их неудобно.
 const TRAY_VISIBLE = 5;
+const TRAY_ARROW = 38;     // место по краям полосы под стрелки листания
 
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
@@ -50,6 +51,8 @@ const tray = document.getElementById('tray');
 const background = document.getElementById('background');
 const stickersLayer = document.getElementById('stickers');
 const overlaysLayer = document.getElementById('overlays');
+const prevButton = document.getElementById('tray-prev');
+const nextButton = document.getElementById('tray-next');
 const vibrationButton = document.getElementById('vibration-toggle');
 
 // --- Вибрация ---
@@ -74,6 +77,22 @@ let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
 let overlays = [];     // куски фона поверх стикеров
 let selected = null;   // какой стикер сейчас выбран
+let trayOffset = 0;    // с какого по счёту стикера показана полоса
+
+// Листание полосы. Само по себе оно не обязательно — стикеры и так
+// подъезжают, когда предыдущие улетают. Но игрок может захотеть
+// посмотреть, что там дальше, и это его право.
+prevButton.addEventListener('click', function () { scrollTray(-TRAY_VISIBLE); });
+nextButton.addEventListener('click', function () { scrollTray(TRAY_VISIBLE); });
+
+function scrollTray(step) {
+  const waiting = stickers.filter(function (s) { return !s.placed; });
+  const limit = Math.max(0, waiting.length - TRAY_VISIBLE);
+
+  trayOffset = Math.min(Math.max(0, trayOffset + step), limit);
+  log('Полоса пролистана, показываем с', trayOffset + 1);
+  layout();
+}
 
 function loadLevel(name) {
   level = LEVELS[name];
@@ -219,7 +238,7 @@ function traySize(sticker, total) {
   const size = stickerSize(sticker);
 
   const maxHeight = tray.clientHeight - TRAY_PADDING;
-  const maxWidth = (tray.clientWidth - TRAY_PADDING - TRAY_GAP * (total - 1)) / total;
+  const maxWidth = (trayInnerWidth() - TRAY_GAP * (total - 1)) / total;
 
   let scale = TRAY_SCALE;
   if (size.height * scale > maxHeight) scale = maxHeight / size.height;
@@ -244,16 +263,33 @@ function positionInSlot(sticker, slot) {
   };
 }
 
-function positionInTray(sticker, index, total) {
-  const size = traySize(sticker, total);
+// Сколько места в полосе остаётся стикерам: вычитаем края под стрелки
+function trayInnerWidth() {
+  return tray.clientWidth - TRAY_ARROW * 2 - TRAY_PADDING;
+}
 
-  const step = size.width + TRAY_GAP;
-  const rowWidth = total * step - TRAY_GAP;
+// Раскладка всей полосы разом.
+//
+// Каждый следующий стикер встаёт в TRAY_GAP пикселях от правого края
+// предыдущего. Считать позицию как «номер × ширина» нельзя: у банки,
+// перца и апельсина ширина разная, и они налезали бы друг на друга.
+function trayLayout(visible) {
+  const sizes = visible.map(function (s) { return traySize(s, visible.length); });
 
-  return {
-    x: tray.offsetLeft + (tray.clientWidth - rowWidth) / 2 + index * step,
-    y: tray.offsetTop + (tray.clientHeight - size.height) / 2
-  };
+  let rowWidth = TRAY_GAP * (visible.length - 1);
+  sizes.forEach(function (size) { rowWidth += size.width; });
+
+  let x = tray.offsetLeft + (tray.clientWidth - rowWidth) / 2;
+
+  return sizes.map(function (size) {
+    const place = {
+      size: size,
+      x: x,
+      y: tray.offsetTop + (tray.clientHeight - size.height) / 2
+    };
+    x += size.width + TRAY_GAP;
+    return place;
+  });
 }
 
 function moveTo(sticker, point) {
@@ -309,7 +345,17 @@ function layout() {
   });
 
   const waiting = stickers.filter(function (s) { return !s.placed; });
-  const visible = waiting.slice(0, TRAY_VISIBLE);
+
+  // Если хвост очереди укоротился, подтягиваем окно назад,
+  // иначе полоса окажется пустой при непустой очереди
+  trayOffset = Math.min(trayOffset, Math.max(0, waiting.length - TRAY_VISIBLE));
+
+  const visible = waiting.slice(trayOffset, trayOffset + TRAY_VISIBLE);
+  const places = trayLayout(visible);
+
+  // Стрелка есть только тогда, когда ей есть что сделать
+  prevButton.hidden = trayOffset === 0;
+  nextButton.hidden = trayOffset + TRAY_VISIBLE >= waiting.length;
 
   stickers.forEach(function (sticker) {
     if (sticker.placed) {
@@ -329,11 +375,11 @@ function layout() {
       return;
     }
 
-    const size = traySize(sticker, visible.length);
+    const place = places[index];
     sticker.element.style.display = '';
-    sticker.element.style.width = size.width + 'px';
-    sticker.element.style.height = size.height + 'px';
-    moveTo(sticker, positionInTray(sticker, index, visible.length));
+    sticker.element.style.width = place.size.width + 'px';
+    sticker.element.style.height = place.size.height + 'px';
+    moveTo(sticker, place);
   });
 }
 

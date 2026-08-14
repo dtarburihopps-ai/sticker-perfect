@@ -76,12 +76,44 @@ html, body {
 
 /* --- Полоса стикеров внизу --- */
 #tray {
+  position: relative;
   flex: none;
   height: var(--tray-height);
   background: var(--tray-bg);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
 }
+
+/* Стрелки листания: тихие, по краям полосы.
+   Прячутся совсем, когда листать некуда — кнопка, которая ничего
+   не делает, только сбивает с толку. */
+.tray-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--icon);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 120ms ease-out;
+}
+
+.tray-arrow[hidden] {
+  display: none;
+}
+
+.tray-arrow:active {
+  opacity: 1;
+}
+
+#tray-prev { left: 2px; }
+#tray-next { right: 2px; }
 
 /* --- Слой со стикерами --- */
 #stickers {

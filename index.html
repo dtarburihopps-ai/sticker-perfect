@@ -22,7 +22,20 @@
       </button>
     </div>
 
-    <div id="tray"></div>
+    <div id="tray">
+      <!-- Стрелки листания. Показываются только когда есть куда листать -->
+      <button id="tray-prev" class="tray-arrow" aria-label="Предыдущие стикеры" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M15 5 L8 12 L15 19"></path>
+        </svg>
+      </button>
+
+      <button id="tray-next" class="tray-arrow" aria-label="Следующие стикеры" hidden>
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 5 L16 12 L9 19"></path>
+        </svg>
+      </button>
+    </div>
 
     <!-- Слой со стикерами: лежит поверх всего, чтобы стикер мог лететь
          из полосы на сцену, не перепрыгивая между контейнерами -->
