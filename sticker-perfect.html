@@ -83,10 +83,11 @@ html, body {
 
 /* --- Место, куда кладут стикер --- */
 /* Обычно невидимо: игрок целится по картинке, а не по рамке.
-   Рамки включаются флагом SHOW_SLOTS в game.js, когда надо настроить координаты. */
+   Рамки включаются флагом SHOW_SLOTS в game.js, когда надо настроить координаты.
+   Тапы места не ловят — их ловит вся сцена, см. game.js */
 .slot {
   position: absolute;
-  cursor: pointer;
+  pointer-events: none;
 }
 
 .slot.visible {
@@ -577,6 +578,10 @@ const TRAY_PADDING = 20;   // отступ от краёв полосы
 const TRAY_VISIBLE = 5;
 const TRAY_ARROW = 38;     // место по краям полосы под стрелки листания
 
+// Наименьшая зона попадания. Продукты на полке бывают по 33 px,
+// а палец промахиваться не должен.
+const TOUCH_MIN = 44;
+
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
 // даже в обычном браузере. Поэтому одного его наличия мало —
@@ -682,9 +687,86 @@ function buildSlots() {
       element: element
     };
 
-    element.addEventListener('click', function () { tapSlot(slot); });
     slots.push(slot);
   });
+}
+
+// Тап ловит вся сцена, а не отдельные места.
+//
+// Так надо, потому что места накладываются друг на друга: место для
+// половины арбуза занимает всю тарелку, а места для кусочков лежат
+// внутри него. Если бы клик ловило само место, половину было бы
+// не положить никуда — её всегда перехватывал бы кусочек.
+//
+// Поэтому решает не то, что сверху, а то, что у игрока в руке.
+scene.addEventListener('click', function (event) {
+  if (!selected) return;
+
+  const box = scene.getBoundingClientRect();
+  const x = event.clientX - box.left;
+  const y = event.clientY - box.top;
+
+  const spot = slotAt(x, y, selected.type);
+  if (spot) {
+    tapSlot(spot);
+    return;
+  }
+
+  // Место есть, но под другой продукт — говорим «не сюда»
+  if (slotAt(x, y, null)) reject(selected, 'здесь другой продукт');
+});
+
+// Зона попадания места. Она делается не меньше пальца: банка на полке
+// всего 34 px, а промахиваться по ней игрок не должен.
+function slotRect(slot) {
+  const box = backgroundBox();
+  const kind = level.stickers[slot.sticker];
+
+  const width = kind.width * box.width;
+  const height = kind.height * box.height;
+  const left = box.left + slot.x * box.width;
+  const top = box.top + slot.bottom * box.height - height;
+
+  const growX = Math.max(0, TOUCH_MIN - width) / 2;
+  const growY = Math.max(0, TOUCH_MIN - height) / 2;
+
+  return {
+    left: left - growX,
+    right: left + width + growX,
+    top: top - growY,
+    bottom: top + height + growY,
+    centerX: left + width / 2,
+    centerY: top + height / 2
+  };
+}
+
+// Место под точкой. Если задан тип — только места под этот продукт;
+// среди подходящих берём то, чей центр ближе к пальцу.
+function slotAt(x, y, type) {
+  let best = null;
+  let bestDistance = Infinity;
+
+  slots.forEach(function (slot) {
+    if (type && slot.sticker !== type) return;
+
+    const rect = slotRect(slot);
+    if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;
+
+    const dx = x - rect.centerX;
+    const dy = y - rect.centerY;
+    const distance = dx * dx + dy * dy;
+
+    // Свободное место всегда важнее занятого: если они лежат друг на друге,
+    // игрок целится в свободное
+    const penalty = slot.filled ? 1e9 : 0;
+
+    if (distance + penalty < bestDistance) {
+      bestDistance = distance + penalty;
+      best = slot;
+    }
+  });
+
+  return best;
 }
 
 function buildStickers() {
