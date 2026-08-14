@@ -147,14 +147,27 @@ function createSticker(type) {
 // Все места на уровне заданы долями от фона — поэтому уровень
 // одинаково правильно ложится на любой экран.
 
-// Прямоугольник фона внутри сцены
+// Прямоугольник фона внутри сцены.
+//
+// Вписываем целиком: сначала пробуем по ширине, и если по высоте не влезло —
+// считаем от высоты. Если вписывать всегда по ширине, то на широком и низком
+// окне (браузер на ноутбуке) холодильник обрежется сверху и снизу.
 function backgroundBox() {
-  const width = scene.clientWidth;
-  const height = width * (background.naturalHeight / background.naturalWidth);
+  const sceneW = scene.clientWidth;
+  const sceneH = scene.clientHeight;
+  const ratio = background.naturalWidth / background.naturalHeight;
+
+  let width = sceneW;
+  let height = width / ratio;
+
+  if (height > sceneH) {
+    height = sceneH;
+    width = height * ratio;
+  }
 
   return {
-    left: 0,
-    top: (scene.clientHeight - height) / 2,
+    left: (sceneW - width) / 2,
+    top: (sceneH - height) / 2,
     width: width,
     height: height
   };
@@ -171,11 +184,19 @@ function stickerSize(sticker) {
 
 // В полосе стикер крупнее, чем на полке: так его удобно взять пальцем
 // и хорошо видно, что берёшь. В полёте он плавно уменьшается до размера места.
+//
+// Но выше самой полосы он быть не должен, иначе торчит за её край —
+// поэтому увеличение урезается по высоте полосы.
 function traySize(sticker) {
   const size = stickerSize(sticker);
+  const limit = tray.clientHeight - 16;
+
+  let scale = TRAY_SCALE;
+  if (size.height * scale > limit) scale = limit / size.height;
+
   return {
-    width: size.width * TRAY_SCALE,
-    height: size.height * TRAY_SCALE
+    width: size.width * scale,
+    height: size.height * scale
   };
 }
 
@@ -237,6 +258,7 @@ function layout() {
   const box = backgroundBox();
 
   background.style.width = box.width + 'px';
+  background.style.left = box.left + 'px';
   background.style.top = box.top + 'px';
 
   slots.forEach(function (slot) {

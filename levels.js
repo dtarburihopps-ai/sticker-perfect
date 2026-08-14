@@ -21,9 +21,11 @@ const LEVELS = {
     // если картинка не закрывает экран целиком
     wall: '#E0DAD2',
 
-    // Какие стикеры бывают на этом уровне
+    // Какие стикеры бывают на этом уровне.
+    // Размер банки задан так, чтобы две ровно заняли высоту от полки
+    // до потолка камеры — это и определяет масштаб всего уровня.
     stickers: {
-      cola: { image: 'images/cola.png', width: 0.0629, height: 0.0664 }
+      cola: { image: 'images/cola.png', width: 0.0917, height: 0.0968 }
     },
 
     // Верхняя полка, левая половина: четыре банки квадратом.
@@ -31,9 +33,9 @@ const LEVELS = {
     // Банка не висит в воздухе: верхние слоты ждут, пока займут нижние.
     slots: [
       { id: 'cola-1', sticker: 'cola', x: 0.1993, bottom: 0.2846, filled: true },
-      { id: 'cola-2', sticker: 'cola', x: 0.2622, bottom: 0.2846 },
-      { id: 'cola-3', sticker: 'cola', x: 0.2622, bottom: 0.2182, needs: 'cola-2' },
-      { id: 'cola-4', sticker: 'cola', x: 0.1993, bottom: 0.2182, needs: 'cola-1' }
+      { id: 'cola-2', sticker: 'cola', x: 0.2910, bottom: 0.2846 },
+      { id: 'cola-3', sticker: 'cola', x: 0.2910, bottom: 0.1878, needs: 'cola-2' },
+      { id: 'cola-4', sticker: 'cola', x: 0.1993, bottom: 0.1878, needs: 'cola-1' }
     ],
 
     // Что лежит в полосе внизу
