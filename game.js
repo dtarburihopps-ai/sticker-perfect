@@ -51,6 +51,7 @@ const tray = document.getElementById('tray');
 const background = document.getElementById('background');
 const stickersLayer = document.getElementById('stickers');
 const overlaysLayer = document.getElementById('overlays');
+const decorLayer = document.getElementById('decor');
 const prevButton = document.getElementById('tray-prev');
 const nextButton = document.getElementById('tray-next');
 const vibrationButton = document.getElementById('vibration-toggle');
@@ -75,6 +76,7 @@ vibrationButton.addEventListener('click', function () {
 let level = null;      // описание уровня из levels.js
 let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
+let decor = [];        // обстановка: лежит с начала уровня и не двигается
 let overlays = [];     // куски фона поверх стикеров
 let selected = null;   // какой стикер сейчас выбран
 let trayOffset = 0;    // с какого по счёту стикера показана полоса
@@ -100,6 +102,7 @@ function loadLevel(name) {
   scene.style.background = level.wall;
   background.src = level.background;
 
+  buildDecor();
   buildSlots();
   buildStickers();
   buildOverlays();
@@ -150,6 +153,24 @@ function buildStickers() {
   // Стикеры игрока — в полосе внизу
   level.tray.forEach(function (type) {
     createSticker(type);
+  });
+}
+
+// Обстановка уровня: тарелки и прочее, что стоит в холодильнике с самого
+// начала. Задаётся так же, как стикеры: x — левый край, bottom — линия,
+// на которой вещь стоит.
+function buildDecor() {
+  decor = [];
+  if (!level.decor) return;
+
+  level.decor.forEach(function (data) {
+    const element = document.createElement('img');
+    element.className = 'decor';
+    element.src = data.image;
+    element.alt = '';
+    decorLayer.appendChild(element);
+
+    decor.push({ x: data.x, bottom: data.bottom, width: data.width, element: element });
   });
 }
 
@@ -336,6 +357,17 @@ function layout() {
     slot.element.style.height = height + 'px';
     slot.element.style.left = (box.left + slot.x * box.width) + 'px';
     slot.element.style.top = (box.top + slot.bottom * box.height - height) + 'px';
+  });
+
+  decor.forEach(function (item) {
+    const width = item.width * box.width;
+    const height = item.element.naturalHeight
+      ? width * item.element.naturalHeight / item.element.naturalWidth
+      : 0;
+
+    item.element.style.width = width + 'px';
+    item.element.style.left = (box.left + item.x * box.width) + 'px';
+    item.element.style.top = (box.top + item.bottom * box.height - height) + 'px';
   });
 
   overlays.forEach(function (overlay) {
