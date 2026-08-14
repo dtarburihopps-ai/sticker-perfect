@@ -28,24 +28,33 @@ const LEVELS = {
       cola: { image: 'images/cola.png', width: 0.0917, height: 0.0968 }
     },
 
-    // Верхняя полка, левая половина: четыре колонки по две банки.
-    // Ровно от стенки до середины полки — пятая колонка уже зашла бы за центр.
-    // Слева стоит затравка, остальные семь мест игрок заполняет сам.
+    // Верхняя полка, левая половина: пять колонок по две банки.
+    // Отсчёт идёт от края САМОЙ ПОЛКИ (0.0907), а не от задней стенки —
+    // полка шире задней панели, и банки должны стоять от бортика.
+    // Пять колонок заходят за середину полки на 14 px, четыре не добирают 20 —
+    // то есть пять оказываются ближе к центру, чем четыре.
+    //
+    // Слева стоит затравка, остальные девять мест игрок заполняет сам.
     // Банка не висит в воздухе: верхний ряд ждёт, пока займут нижний.
     slots: [
-      { id: 'low-1',  sticker: 'cola', x: 0.1825, bottom: 0.2846, filled: true },
-      { id: 'low-2',  sticker: 'cola', x: 0.2742, bottom: 0.2846 },
-      { id: 'low-3',  sticker: 'cola', x: 0.3659, bottom: 0.2846 },
-      { id: 'low-4',  sticker: 'cola', x: 0.4576, bottom: 0.2846 },
+      { id: 'low-1',  sticker: 'cola', x: 0.0907, bottom: 0.2846, filled: true },
+      { id: 'low-2',  sticker: 'cola', x: 0.1824, bottom: 0.2846 },
+      { id: 'low-3',  sticker: 'cola', x: 0.2741, bottom: 0.2846 },
+      { id: 'low-4',  sticker: 'cola', x: 0.3658, bottom: 0.2846 },
+      { id: 'low-5',  sticker: 'cola', x: 0.4575, bottom: 0.2846 },
 
-      { id: 'high-1', sticker: 'cola', x: 0.1825, bottom: 0.1878, needs: 'low-1' },
-      { id: 'high-2', sticker: 'cola', x: 0.2742, bottom: 0.1878, needs: 'low-2' },
-      { id: 'high-3', sticker: 'cola', x: 0.3659, bottom: 0.1878, needs: 'low-3' },
-      { id: 'high-4', sticker: 'cola', x: 0.4576, bottom: 0.1878, needs: 'low-4' }
+      { id: 'high-1', sticker: 'cola', x: 0.0907, bottom: 0.1878, needs: 'low-1' },
+      { id: 'high-2', sticker: 'cola', x: 0.1824, bottom: 0.1878, needs: 'low-2' },
+      { id: 'high-3', sticker: 'cola', x: 0.2741, bottom: 0.1878, needs: 'low-3' },
+      { id: 'high-4', sticker: 'cola', x: 0.3658, bottom: 0.1878, needs: 'low-4' },
+      { id: 'high-5', sticker: 'cola', x: 0.4575, bottom: 0.1878, needs: 'low-5' }
     ],
 
     // Что лежит в полосе внизу
-    tray: ['cola', 'cola', 'cola', 'cola', 'cola', 'cola', 'cola']
+    tray: [
+      'cola', 'cola', 'cola', 'cola', 'cola',
+      'cola', 'cola', 'cola', 'cola'
+    ]
   }
 
 };

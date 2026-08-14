@@ -23,6 +23,11 @@ const TRAY_SCALE = 1.8;
 const TRAY_GAP = 10;       // просвет между стикерами в полосе
 const TRAY_PADDING = 20;   // отступ от краёв полосы
 
+// Сколько стикеров показываем в полосе одновременно. Остальные ждут очереди
+// и появляются, когда предыдущие улетели. Без этого девять банок ужимаются
+// до 31 px — мельче, чем они же на полке, и брать их неудобно.
+const TRAY_VISIBLE = 5;
+
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
 // даже в обычном браузере. Поэтому одного его наличия мало —
@@ -278,17 +283,31 @@ function layout() {
   });
 
   const waiting = stickers.filter(function (s) { return !s.placed; });
+  const visible = waiting.slice(0, TRAY_VISIBLE);
 
   stickers.forEach(function (sticker) {
-    const size = sticker.placed ? stickerSize(sticker) : traySize(sticker, waiting.length);
+    if (sticker.placed) {
+      const size = stickerSize(sticker);
+      sticker.element.style.display = '';
+      sticker.element.style.width = size.width + 'px';
+      sticker.element.style.height = size.height + 'px';
+      moveTo(sticker, positionInSlot(sticker, sticker.slot));
+      return;
+    }
+
+    const index = visible.indexOf(sticker);
+
+    // Стикеры сверх пятёрки ждут очереди и пока не показываются
+    if (index === -1) {
+      sticker.element.style.display = 'none';
+      return;
+    }
+
+    const size = traySize(sticker, visible.length);
+    sticker.element.style.display = '';
     sticker.element.style.width = size.width + 'px';
     sticker.element.style.height = size.height + 'px';
-
-    if (sticker.placed) {
-      moveTo(sticker, positionInSlot(sticker, sticker.slot));
-    } else {
-      moveTo(sticker, positionInTray(sticker, waiting.indexOf(sticker), waiting.length));
-    }
+    moveTo(sticker, positionInTray(sticker, index, visible.length));
   });
 }
 
