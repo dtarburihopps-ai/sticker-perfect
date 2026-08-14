@@ -40,9 +40,11 @@ const LEVELS = {
     // Размер банки задан так, чтобы две ровно заняли высоту от полки
     // до потолка камеры — это и определяет масштаб всего уровня.
     stickers: {
-      cola:   { image: 'images/cola.png',   width: 0.0917, height: 0.0968 },
-      pepper: { image: 'images/pepper.png', width: 0.0872, height: 0.0629 },
-      orange: { image: 'images/orange.png', width: 0.0872, height: 0.0574 }
+      cola:   { image: 'images/cola.png',        width: 0.0917, height: 0.0968 },
+      pepper: { image: 'images/pepper.png',      width: 0.0872, height: 0.0629 },
+      orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
+      half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1573 },
+      slice:  { image: 'images/melon-slice.png', width: 0.1381, height: 0.0783 }
     },
 
     slots: [
@@ -78,17 +80,35 @@ const LEVELS = {
       { id: 'orange-2-1', sticker: 'orange', x: 0.5132, bottom: 0.8161, needs: 'orange-1-1' },
       { id: 'orange-2-2', sticker: 'orange', x: 0.6004, bottom: 0.8161, needs: 'orange-1-2' },
       { id: 'orange-2-3', sticker: 'orange', x: 0.6876, bottom: 0.8161, needs: 'orange-1-3' },
-      { id: 'orange-2-4', sticker: 'orange', x: 0.7748, bottom: 0.8161, needs: 'orange-1-4' }
+      { id: 'orange-2-4', sticker: 'orange', x: 0.7748, bottom: 0.8161, needs: 'orange-1-4' },
+
+      // --- Вторая полка: арбуз на тарелках ---
+      // Тарелки одинаковые, и заранее не решено, какая под что. Роль
+      // достаётся тарелке в момент первого попадания: положил половину
+      // на левую — кусочки идут на правую, и наоборот.
+      //
+      // Отсюда group: в одной группе не уживаются разные продукты,
+      // и один продукт не расползается по двум группам.
+      { id: 'half-left',    sticker: 'half',  group: 'plate-left',  x: 0.1311, bottom: 0.4735 },
+      { id: 'half-right',   sticker: 'half',  group: 'plate-right', x: 0.5425, bottom: 0.4735 },
+
+      { id: 'slice-left-1',  sticker: 'slice', group: 'plate-left',  x: 0.1272, bottom: 0.4735 },
+      { id: 'slice-left-2',  sticker: 'slice', group: 'plate-left',  x: 0.2294, bottom: 0.4735 },
+      { id: 'slice-left-3',  sticker: 'slice', group: 'plate-left',  x: 0.3317, bottom: 0.4735 },
+
+      { id: 'slice-right-1', sticker: 'slice', group: 'plate-right', x: 0.5386, bottom: 0.4735 },
+      { id: 'slice-right-2', sticker: 'slice', group: 'plate-right', x: 0.6409, bottom: 0.4735 },
+      { id: 'slice-right-3', sticker: 'slice', group: 'plate-right', x: 0.7431, bottom: 0.4735 }
     ],
 
     // Что лежит в полосе внизу. Вперемешку, а не кучками по видам —
     // иначе игрок просто выкладывает подряд и не думает вообще.
     tray: [
-      'cola', 'pepper', 'orange', 'cola', 'orange',
-      'pepper', 'cola', 'pepper', 'orange', 'cola',
-      'orange', 'pepper', 'cola', 'orange', 'pepper',
-      'cola', 'pepper', 'orange', 'cola', 'pepper',
-      'orange'
+      'cola', 'pepper', 'half', 'orange', 'cola',
+      'orange', 'slice', 'pepper', 'cola', 'pepper',
+      'orange', 'slice', 'cola', 'orange', 'pepper',
+      'cola', 'slice', 'orange', 'pepper', 'cola',
+      'orange', 'pepper', 'cola', 'orange', 'pepper'
     ]
   }
 

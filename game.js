@@ -80,6 +80,7 @@ let decor = [];        // обстановка: лежит с начала ур�
 let overlays = [];     // куски фона поверх стикеров
 let selected = null;   // какой стикер сейчас выбран
 let trayOffset = 0;    // с какого по счёту стикера показана полоса
+let placeOrder = 0;    // счётчик постановок: кто позже, тот выше лежит
 
 // Листание полосы. Само по себе оно не обязательно — стикеры и так
 // подъезжают, когда предыдущие улетают. Но игрок может захотеть
@@ -128,6 +129,7 @@ function buildSlots() {
       x: data.x,
       bottom: data.bottom,
       needs: data.needs || null,
+      group: data.group || null,
       filled: !!data.filled,
       element: element
     };
@@ -463,7 +465,41 @@ function tapSlot(slot) {
     return;
   }
 
+  // Тарелка занята другим продуктом: на ту, где лежит половина арбуза,
+  // кусочки уже не положить
+  const busy = occupiedBy(slot.group);
+  if (busy && busy !== sticker.type) {
+    reject(sticker, 'тарелка занята другим продуктом');
+    return;
+  }
+
+  // Этот продукт уже разложен на другой тарелке — значит весь идёт туда
+  if (slot.group && groupOf(sticker.type) && groupOf(sticker.type) !== slot.group) {
+    reject(sticker, 'этот продукт уже лежит на другой тарелке');
+    return;
+  }
+
   place(sticker, slot);
+}
+
+// Что лежит в этой группе мест (например, на левой тарелке)
+function occupiedBy(group) {
+  if (!group) return null;
+
+  const taken = slots.filter(function (s) {
+    return s.group === group && s.filled;
+  })[0];
+
+  return taken ? taken.sticker : null;
+}
+
+// В какой группе уже лежит этот продукт
+function groupOf(type) {
+  const taken = slots.filter(function (s) {
+    return s.group && s.filled && s.sticker === type;
+  })[0];
+
+  return taken ? taken.group : null;
 }
 
 function place(sticker, slot) {
@@ -481,6 +517,11 @@ function place(sticker, slot) {
   sticker.placed = true;
   sticker.slot = slot;
   slot.filled = true;
+
+  // Положенный позже ложится поверх: кусочки арбуза перекрывают друг друга
+  // в том порядке, в каком их клали
+  placeOrder += 1;
+  sticker.element.style.zIndex = placeOrder;
 
   log('Летит:', sticker.type, '→', slot.id);
 
