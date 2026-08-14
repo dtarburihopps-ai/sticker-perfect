@@ -17,8 +17,11 @@ const SNAP_TIME = 220;
 const REJECT_TIME = 150;
 
 // Во сколько раз стикер в нижней полосе крупнее, чем на полке.
-// Банка на полке всего ~24 px в ширину — пальцем в такое не попасть.
+// Банка на полке всего ~34 px в ширину — пальцем в такое попасть трудно.
+// Если стикеров много, увеличение само уменьшится, чтобы ряд поместился.
 const TRAY_SCALE = 1.8;
+const TRAY_GAP = 10;       // просвет между стикерами в полосе
+const TRAY_PADDING = 20;   // отступ от краёв полосы
 
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
@@ -185,14 +188,17 @@ function stickerSize(sticker) {
 // В полосе стикер крупнее, чем на полке: так его удобно взять пальцем
 // и хорошо видно, что берёшь. В полёте он плавно уменьшается до размера места.
 //
-// Но выше самой полосы он быть не должен, иначе торчит за её край —
-// поэтому увеличение урезается по высоте полосы.
-function traySize(sticker) {
+// Увеличение урезается дважды: по высоте полосы, чтобы стикер не торчал
+// за её край, и по ширине, чтобы весь ряд поместился и ничего не вылезло вбок.
+function traySize(sticker, total) {
   const size = stickerSize(sticker);
-  const limit = tray.clientHeight - 16;
+
+  const maxHeight = tray.clientHeight - TRAY_PADDING;
+  const maxWidth = (tray.clientWidth - TRAY_PADDING - TRAY_GAP * (total - 1)) / total;
 
   let scale = TRAY_SCALE;
-  if (size.height * scale > limit) scale = limit / size.height;
+  if (size.height * scale > maxHeight) scale = maxHeight / size.height;
+  if (size.width * scale > maxWidth) scale = maxWidth / size.width;
 
   return {
     width: size.width * scale,
@@ -214,11 +220,10 @@ function positionInSlot(sticker, slot) {
 }
 
 function positionInTray(sticker, index, total) {
-  const size = traySize(sticker);
+  const size = traySize(sticker, total);
 
-  const gap = 14;
-  const step = size.width + gap;
-  const rowWidth = total * step - gap;
+  const step = size.width + TRAY_GAP;
+  const rowWidth = total * step - TRAY_GAP;
 
   return {
     x: tray.offsetLeft + (tray.clientWidth - rowWidth) / 2 + index * step,
@@ -275,7 +280,7 @@ function layout() {
   const waiting = stickers.filter(function (s) { return !s.placed; });
 
   stickers.forEach(function (sticker) {
-    const size = sticker.placed ? stickerSize(sticker) : traySize(sticker);
+    const size = sticker.placed ? stickerSize(sticker) : traySize(sticker, waiting.length);
     sticker.element.style.width = size.width + 'px';
     sticker.element.style.height = size.height + 'px';
 

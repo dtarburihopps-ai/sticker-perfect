@@ -28,18 +28,24 @@ const LEVELS = {
       cola: { image: 'images/cola.png', width: 0.0917, height: 0.0968 }
     },
 
-    // Верхняя полка, левая половина: четыре банки квадратом.
-    // Слева стоит затравка, три места игрок заполняет сам.
-    // Банка не висит в воздухе: верхние слоты ждут, пока займут нижние.
+    // Верхняя полка, левая половина: четыре колонки по две банки.
+    // Ровно от стенки до середины полки — пятая колонка уже зашла бы за центр.
+    // Слева стоит затравка, остальные семь мест игрок заполняет сам.
+    // Банка не висит в воздухе: верхний ряд ждёт, пока займут нижний.
     slots: [
-      { id: 'cola-1', sticker: 'cola', x: 0.1993, bottom: 0.2846, filled: true },
-      { id: 'cola-2', sticker: 'cola', x: 0.2910, bottom: 0.2846 },
-      { id: 'cola-3', sticker: 'cola', x: 0.2910, bottom: 0.1878, needs: 'cola-2' },
-      { id: 'cola-4', sticker: 'cola', x: 0.1993, bottom: 0.1878, needs: 'cola-1' }
+      { id: 'low-1',  sticker: 'cola', x: 0.1825, bottom: 0.2846, filled: true },
+      { id: 'low-2',  sticker: 'cola', x: 0.2742, bottom: 0.2846 },
+      { id: 'low-3',  sticker: 'cola', x: 0.3659, bottom: 0.2846 },
+      { id: 'low-4',  sticker: 'cola', x: 0.4576, bottom: 0.2846 },
+
+      { id: 'high-1', sticker: 'cola', x: 0.1825, bottom: 0.1878, needs: 'low-1' },
+      { id: 'high-2', sticker: 'cola', x: 0.2742, bottom: 0.1878, needs: 'low-2' },
+      { id: 'high-3', sticker: 'cola', x: 0.3659, bottom: 0.1878, needs: 'low-3' },
+      { id: 'high-4', sticker: 'cola', x: 0.4576, bottom: 0.1878, needs: 'low-4' }
     ],
 
     // Что лежит в полосе внизу
-    tray: ['cola', 'cola', 'cola']
+    tray: ['cola', 'cola', 'cola', 'cola', 'cola', 'cola', 'cola']
   }
 
 };
