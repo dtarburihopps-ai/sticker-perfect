@@ -1,14 +1,21 @@
 /* Sticker Perfect — вид игры */
 
-/* --- Палитра и размеры в одном месте, чтобы менять быстро --- */
+/* --- Палитра, размеры и тайминги в одном месте, чтобы менять быстро --- */
 :root {
   --paper-dark:  #EFE7D9;  /* поле вокруг сцены */
   --paper:       #F4EDE2;  /* сцена */
   --tray-bg:     #E5DBC9;  /* полоса стикеров внизу */
   --line:        #CFC4B0;  /* тонкие разделители */
   --icon:        #8A8070;  /* иконки */
+  --zone-bg:     #DED2BC;  /* заглушка зоны */
+  --zone-line:   #C3B69D;
 
   --tray-height: 110px;    /* высота полосы стикеров */
+
+  /* Тайминги — крутим их на задаче 4, пока не станет приятно */
+  --fly-time:    280ms;
+  --fly-curve:   cubic-bezier(0.34, 1.2, 0.64, 1);
+  --stick-time:  220ms;   /* приклеивание */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -32,12 +39,14 @@ html, body {
 
 /* --- Экран целиком --- */
 #app {
+  position: relative;              /* точка отсчёта для координат стикеров */
   height: 100vh;
   height: 100dvh;                  /* dvh не скачет, когда прячется адресная строка */
   display: flex;
   flex-direction: column;
   max-width: 520px;                /* на десктопе не растягиваемся на весь монитор */
   margin: 0 auto;
+  overflow: hidden;
 }
 
 /* --- Сцена: тут живёт уровень --- */
@@ -56,10 +65,87 @@ html, body {
   background: var(--tray-bg);
   border-top: 1px solid var(--line);
   padding-bottom: env(safe-area-inset-bottom);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
+}
+
+/* --- Зона: место, куда кладут стикер --- */
+.zone {
+  position: absolute;
+  background: var(--zone-bg);
+  border: 1px solid var(--zone-line);
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Заглушка стакана-карандашницы: высокий и узкий.
+   Позиция временная — расставим по-настоящему, когда придёт стол. */
+#zone-cup {
+  width: 56px;
+  height: 110px;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+}
+
+/* --- Слой со стикерами --- */
+#stickers {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;            /* сам слой не ловит тапы */
+}
+
+/* --- Стикер --- */
+/* Внешний div отвечает только за положение, внутренний — только за вид.
+   Так полёт и «пружинка» не мешают друг другу: это два разных transform. */
+.sticker {
+  position: absolute;
+  left: 0;
+  top: 0;
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.sticker.flying {
+  transition: transform var(--fly-time) var(--fly-curve);
+}
+
+/* Приклеенный стикер больше не ловит тапы — иначе он закрывал бы собой
+   часть зоны, и по ней нельзя было бы попасть следующим стикером */
+.sticker.placed {
+  pointer-events: none;
+}
+
+.sticker-body {
+  width: 100%;
+  height: 100%;
+  background: #FBF7F0;
+  border: 3px solid #fff;          /* белая рамка — это и делает картинку наклейкой */
+  border-radius: 5px;
+  box-shadow: 0 1px 3px rgba(90, 70, 40, 0.18);
+  transition: transform 120ms ease-out, box-shadow 120ms ease-out;
+}
+
+/* Выбранный стикер слегка приподнимается */
+.sticker.selected .sticker-body {
+  transform: scale(1.06);
+  box-shadow: 0 4px 10px rgba(90, 70, 40, 0.26);
+}
+
+/* В полёте стикер приподнят над поверхностью: крупнее и с большой мягкой тенью.
+   Именно тень читается глазом как «висит в воздухе». */
+.sticker.flying .sticker-body {
+  transform: scale(1.10);
+  box-shadow: 0 10px 16px rgba(90, 70, 40, 0.30);
+}
+
+/* Приземление: опускается и прижимается, тень схлопывается в тонкую.
+   Начало анимации совпадает с видом в полёте — поэтому нет скачка. */
+.sticker.snap .sticker-body {
+  animation: stick var(--stick-time) ease-out;
+}
+
+@keyframes stick {
+  0%   { transform: scale(1.10); box-shadow: 0 10px 16px rgba(90, 70, 40, 0.30); }
+  100% { transform: scale(1);    box-shadow: 0 1px 3px rgba(90, 70, 40, 0.18); }
 }
 
 /* --- Иконка выключения вибрации: единственная кнопка в игре --- */
@@ -78,6 +164,7 @@ html, body {
   opacity: 0.55;
   cursor: pointer;
   transition: opacity 120ms ease-out;
+  z-index: 2;
 }
 
 #vibration-toggle:active {
