@@ -40,6 +40,10 @@ const TRAY_ARROW = 38;     // место по краям полосы под с�
 // а палец промахиваться не должен.
 const TOUCH_MIN = 44;
 
+// Пауза перед приходом кота: даём последнему стикеру улечься,
+// а игроку — увидеть собранную картинку
+const MASCOT_DELAY = 450;
+
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
 // даже в обычном браузере. Поэтому одного его наличия мало —
@@ -66,6 +70,7 @@ const decorLayer = document.getElementById('decor');
 const prevButton = document.getElementById('tray-prev');
 const nextButton = document.getElementById('tray-next');
 const vibrationButton = document.getElementById('vibration-toggle');
+const mascot = document.getElementById('mascot');
 
 // --- Вибрация ---
 let vibrationOn = true;
@@ -92,6 +97,7 @@ let overlays = [];     // куски фона поверх стикеров
 let selected = null;   // какой стикер сейчас выбран
 let trayOffset = 0;    // с какого по счёту стикера показана полоса
 let placeOrder = 0;    // счётчик постановок: кто позже, тот выше лежит
+let finished = false;  // уровень уже собран
 
 // Листание полосы. Само по себе оно не обязательно — стикеры и так
 // подъезжают, когда предыдущие улетают. Но игрок может захотеть
@@ -668,11 +674,31 @@ function place(sticker, slot) {
 
     setTimeout(function () {
       sticker.element.classList.remove('snap');
+      checkFinished();
     }, SNAP_TIME);
   }, FLY_TIME);
 
   // Стикер улетел из полосы — оставшиеся сдвигаются к центру
   layout();
+}
+
+// Уровень закончен, когда разложены все стикеры игрока.
+//
+// Считаем именно стикеры, а не занятые места: часть мест остаётся пустой
+// нарочно — например, на второй тарелке, куда арбуз так и не пошёл.
+function checkFinished() {
+  if (finished) return;
+  if (stickers.some(function (s) { return !s.placed; })) return;
+
+  finished = true;
+  log('Уровень собран');
+
+  // Небольшая пауза: пусть последний стикер успеет улечься,
+  // а игрок — увидеть готовую картинку
+  setTimeout(function () {
+    mascot.classList.add('show');
+    log('Кот пришёл');
+  }, MASCOT_DELAY);
 }
 
 // Мягкое «не туда»: стикер дрогнул, выбор НЕ снимается.

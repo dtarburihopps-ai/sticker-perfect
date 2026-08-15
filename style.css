@@ -13,6 +13,7 @@
   --fly-curve:    cubic-bezier(0.34, 1.2, 0.64, 1);
   --stick-time:   220ms;   /* приклеивание */
   --reject-time:  150ms;   /* «не туда» */
+  --mascot-time:  620ms;   /* кот выезжает снизу в конце уровня */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -244,6 +245,28 @@ html, body {
   0%, 100% { transform: translateX(0)    scale(1.08); }
   25%      { transform: translateX(-3px) scale(1.08); }
   75%      { transform: translateX(3px)  scale(1.08); }
+}
+
+/* --- Кот: финал уровня --- */
+/* Выезжает снизу, когда встал последний стикер, и остаётся. Ничего не говорит
+   и не хвалит — просто приходит посмотреть на собранный холодильник.
+   Кривая без отскока: он выглядывает, а не выпрыгивает. */
+#mascot {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 62%;
+  max-width: 300px;
+  display: block;
+  pointer-events: none;
+  z-index: 4;                      /* выше стикеров и стенки ящиков */
+  transform: translate(-50%, 100%);
+  transition: transform var(--mascot-time) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Виден по грудь: снизу торчит примерно три четверти картинки */
+#mascot.show {
+  transform: translate(-50%, 28%);
 }
 
 /* --- Иконка выключения вибрации: единственная кнопка в игре --- */
