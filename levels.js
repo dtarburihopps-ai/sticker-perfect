@@ -10,20 +10,27 @@
 //   x       — левый край стикера
 //   bottom  — линия, НА которой стикер стоит (его низ, не центр!)
 //   needs   — слот, который должен быть занят, иначе сюда нельзя
+//   group   — в одной группе не уживаются разные продукты
 //   filled  — здесь стикер стоит с самого начала (затравка)
+//
+// ЧИСЛА НЕ ПРАВИТЬ РУКАМИ. Они посчитаны из размеров холодильника:
+//
+//     python tools/level1.py
+//
+// Скрипт перевырезает картинки и печатает готовые строки для этого файла.
+// Хочешь подвинуть банки или добавить ряд — меняй константы там.
 
 const LEVELS = {
 
   fridge: {
     background: 'images/fridge.png',
 
-    // Цвет стены вокруг холодильника — им заливаются поля,
-    // если картинка не закрывает экран целиком
+    // Цвет стены вокруг холодильника: им заливаются поля, если картинка
+    // не закрывает экран целиком. Взят пипеткой с самой картинки.
     wall: '#E0DAD2',
 
     // Обстановка: стоит в холодильнике с самого начала и не двигается.
     // Тарелки — подсказка игроку: сюда кладут арбуз.
-    // bottom — линия, НА которой вещь стоит (верхняя грань второй полки).
     decor: [
       { image: 'images/plate.png', x: 0.1074, bottom: 0.4957, width: 0.3835 },
       { image: 'images/plate.png', x: 0.5188, bottom: 0.4957, width: 0.3835 }
@@ -36,31 +43,44 @@ const LEVELS = {
       { image: 'images/drawers-front.png', x: 0.0907, y: 0.7233, width: 0.8131 }
     ],
 
-    // Какие стикеры бывают на этом уровне.
-    // Размер банки задан так, чтобы две ровно заняли высоту от полки
-    // до потолка камеры — это и определяет масштаб всего уровня.
     stickers: {
-      cola:   { image: 'images/cola.png',        width: 0.0917, height: 0.0968 },
+      cola:   { image: 'images/cola.png',        width: 0.0931, height: 0.0960 },
       pepper: { image: 'images/pepper.png',      width: 0.0872, height: 0.0629 },
       orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
-      half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1573 },
+      half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1579 },
       slice:  { image: 'images/melon-slice.png', width: 0.1381, height: 0.0783 }
     },
 
     slots: [
       // --- Верхняя полка: четыре колонки по две банки ---
-      // Блок стоит по центру левой половины полки, отступы по 9 px.
-      { id: 'cola-low-1',  sticker: 'cola', x: 0.1148, bottom: 0.2846, filled: true },
-      { id: 'cola-low-2',  sticker: 'cola', x: 0.2065, bottom: 0.2846 },
-      { id: 'cola-low-3',  sticker: 'cola', x: 0.2982, bottom: 0.2846 },
-      { id: 'cola-low-4',  sticker: 'cola', x: 0.3899, bottom: 0.2846 },
+      // Блок стоит по центру левой половины полки.
+      { id: 'cola-low-1',  sticker: 'cola', x: 0.1118, bottom: 0.2846, filled: true },
+      { id: 'cola-low-2',  sticker: 'cola', x: 0.2050, bottom: 0.2846 },
+      { id: 'cola-low-3',  sticker: 'cola', x: 0.2981, bottom: 0.2846 },
+      { id: 'cola-low-4',  sticker: 'cola', x: 0.3913, bottom: 0.2846 },
 
-      { id: 'cola-high-1', sticker: 'cola', x: 0.1148, bottom: 0.1878, needs: 'cola-low-1' },
-      { id: 'cola-high-2', sticker: 'cola', x: 0.2065, bottom: 0.1878, needs: 'cola-low-2' },
-      { id: 'cola-high-3', sticker: 'cola', x: 0.2982, bottom: 0.1878, needs: 'cola-low-3' },
-      { id: 'cola-high-4', sticker: 'cola', x: 0.3899, bottom: 0.1878, needs: 'cola-low-4' },
+      { id: 'cola-high-1', sticker: 'cola', x: 0.1118, bottom: 0.1885, needs: 'cola-low-1' },
+      { id: 'cola-high-2', sticker: 'cola', x: 0.2050, bottom: 0.1885, needs: 'cola-low-2' },
+      { id: 'cola-high-3', sticker: 'cola', x: 0.2981, bottom: 0.1885, needs: 'cola-low-3' },
+      { id: 'cola-high-4', sticker: 'cola', x: 0.3913, bottom: 0.1885, needs: 'cola-low-4' },
 
-      // --- Левый ящик: перец, четыре в ряд, два ряда ---
+      // --- Вторая полка: арбуз на тарелках ---
+      // Тарелки одинаковые, и заранее не решено, какая под что. Роль
+      // достаётся тарелке в момент первого попадания: положил половину
+      // на левую — кусочки идут на правую, и наоборот. Отсюда group.
+      { id: 'half-left',     sticker: 'half',  group: 'plate-left',  x: 0.1318, bottom: 0.4727 },
+      { id: 'half-right',    sticker: 'half',  group: 'plate-right', x: 0.5432, bottom: 0.4727 },
+
+      { id: 'slice-left-1',  sticker: 'slice', group: 'plate-left',  x: 0.1278, bottom: 0.4727 },
+      { id: 'slice-left-2',  sticker: 'slice', group: 'plate-left',  x: 0.2301, bottom: 0.4727 },
+      { id: 'slice-left-3',  sticker: 'slice', group: 'plate-left',  x: 0.3324, bottom: 0.4727 },
+
+      { id: 'slice-right-1', sticker: 'slice', group: 'plate-right', x: 0.5393, bottom: 0.4727 },
+      { id: 'slice-right-2', sticker: 'slice', group: 'plate-right', x: 0.6416, bottom: 0.4727 },
+      { id: 'slice-right-3', sticker: 'slice', group: 'plate-right', x: 0.7438, bottom: 0.4727 },
+
+      // --- Нижние ящики: перец слева, апельсины справа ---
+      // Верхний ряд ждёт нижний: овощ не висит в воздухе.
       { id: 'pepper-1-1', sticker: 'pepper', x: 0.1325, bottom: 0.8735, filled: true },
       { id: 'pepper-1-2', sticker: 'pepper', x: 0.2197, bottom: 0.8735 },
       { id: 'pepper-1-3', sticker: 'pepper', x: 0.3068, bottom: 0.8735 },
@@ -71,7 +91,6 @@ const LEVELS = {
       { id: 'pepper-2-3', sticker: 'pepper', x: 0.3068, bottom: 0.8106, needs: 'pepper-1-3' },
       { id: 'pepper-2-4', sticker: 'pepper', x: 0.3940, bottom: 0.8106, needs: 'pepper-1-4' },
 
-      // --- Правый ящик: апельсины, четыре в ряд, два ряда ---
       { id: 'orange-1-1', sticker: 'orange', x: 0.5132, bottom: 0.8735, filled: true },
       { id: 'orange-1-2', sticker: 'orange', x: 0.6004, bottom: 0.8735 },
       { id: 'orange-1-3', sticker: 'orange', x: 0.6876, bottom: 0.8735 },
@@ -80,25 +99,7 @@ const LEVELS = {
       { id: 'orange-2-1', sticker: 'orange', x: 0.5132, bottom: 0.8161, needs: 'orange-1-1' },
       { id: 'orange-2-2', sticker: 'orange', x: 0.6004, bottom: 0.8161, needs: 'orange-1-2' },
       { id: 'orange-2-3', sticker: 'orange', x: 0.6876, bottom: 0.8161, needs: 'orange-1-3' },
-      { id: 'orange-2-4', sticker: 'orange', x: 0.7748, bottom: 0.8161, needs: 'orange-1-4' },
-
-      // --- Вторая полка: арбуз на тарелках ---
-      // Тарелки одинаковые, и заранее не решено, какая под что. Роль
-      // достаётся тарелке в момент первого попадания: положил половину
-      // на левую — кусочки идут на правую, и наоборот.
-      //
-      // Отсюда group: в одной группе не уживаются разные продукты,
-      // и один продукт не расползается по двум группам.
-      { id: 'half-left',    sticker: 'half',  group: 'plate-left',  x: 0.1311, bottom: 0.4735 },
-      { id: 'half-right',   sticker: 'half',  group: 'plate-right', x: 0.5425, bottom: 0.4735 },
-
-      { id: 'slice-left-1',  sticker: 'slice', group: 'plate-left',  x: 0.1272, bottom: 0.4735 },
-      { id: 'slice-left-2',  sticker: 'slice', group: 'plate-left',  x: 0.2294, bottom: 0.4735 },
-      { id: 'slice-left-3',  sticker: 'slice', group: 'plate-left',  x: 0.3317, bottom: 0.4735 },
-
-      { id: 'slice-right-1', sticker: 'slice', group: 'plate-right', x: 0.5386, bottom: 0.4735 },
-      { id: 'slice-right-2', sticker: 'slice', group: 'plate-right', x: 0.6409, bottom: 0.4735 },
-      { id: 'slice-right-3', sticker: 'slice', group: 'plate-right', x: 0.7431, bottom: 0.4735 }
+      { id: 'orange-2-4', sticker: 'orange', x: 0.7748, bottom: 0.8161, needs: 'orange-1-4' }
     ],
 
     // Что лежит в полосе внизу. Вперемешку, а не кучками по видам —

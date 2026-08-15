@@ -10,11 +10,18 @@ function log() {
   if (DEBUG) console.log.apply(console, arguments);
 }
 
-// ВАЖНО: эти числа должны совпадать с --fly-time, --stick-time и --reject-time
-// в style.css. Меняешь тут — поменяй и там.
-const FLY_TIME = 280;
-const SNAP_TIME = 220;
-const REJECT_TIME = 150;
+// Тайминги живут в style.css рядом с самими анимациями — там их и правим.
+// Код читает их оттуда, чтобы одно и то же время не пришлось держать
+// в двух файлах и однажды забыть поменять во втором.
+function cssTime(name) {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const value = parseFloat(raw);
+  return raw.slice(-2) === 'ms' ? value : value * 1000;
+}
+
+const FLY_TIME = cssTime('--fly-time');
+const SNAP_TIME = cssTime('--stick-time');
+const REJECT_TIME = cssTime('--reject-time');
 
 // Во сколько раз стикер в нижней полосе крупнее, чем на полке.
 // Банка на полке всего ~34 px в ширину — пальцем в такое попасть трудно.
@@ -104,7 +111,10 @@ function scrollTray(step) {
 function loadLevel(name) {
   level = LEVELS[name];
 
+  // Цвет стены задаёт уровень, а не таблица стилей: у следующего уровня
+  // он будет свой. Красим и страницу тоже, чтобы поля по краям совпадали.
   scene.style.background = level.wall;
+  document.body.style.background = level.wall;
   background.src = level.background;
 
   buildDecor();
@@ -122,10 +132,14 @@ function buildSlots() {
   slots = [];
 
   level.slots.forEach(function (data) {
-    const element = document.createElement('div');
-    element.className = 'slot';
-    if (SHOW_SLOTS) element.classList.add('visible');
-    scene.appendChild(element);
+    // Место — это данные, а не элемент страницы: тапы ловит сцена,
+    // а рисовать место незачем. Элемент создаётся только для отладки.
+    let element = null;
+    if (SHOW_SLOTS) {
+      element = document.createElement('div');
+      element.className = 'slot visible';
+      scene.appendChild(element);
+    }
 
     const slot = {
       id: data.id,
@@ -303,7 +317,13 @@ function createSticker(type) {
 // Вписываем целиком: сначала пробуем по ширине, и если по высоте не влезло —
 // считаем от высоты. Если вписывать всегда по ширине, то на широком и низком
 // окне (браузер на ноутбуке) холодильник обрежется сверху и снизу.
+// Результат запоминается: за один тап он спрашивается по разу на каждое
+// место, а мест на уровне три десятка. Сбрасывается, когда меняется экран.
+let boxCache = null;
+
 function backgroundBox() {
+  if (boxCache) return boxCache;
+
   const sceneW = scene.clientWidth;
   const sceneH = scene.clientHeight;
   const ratio = background.naturalWidth / background.naturalHeight;
@@ -316,12 +336,14 @@ function backgroundBox() {
     width = height * ratio;
   }
 
-  return {
+  boxCache = {
     left: (sceneW - width) / 2,
     top: (sceneH - height) / 2,
     width: width,
     height: height
   };
+
+  return boxCache;
 }
 
 // Размер стикера на его месте в холодильнике
@@ -423,24 +445,28 @@ function scheduleLayout(attempt) {
   }, 16);
 }
 
-// Разложить всё по местам. Вызывается при старте и при изменении размера окна.
+// Разложить всё по местам. Вызывается при старте, при изменении размера
+// окна и после каждой постановки стикера.
 function layout() {
+  boxCache = null;               // размеры могли поменяться
+
+  layoutBackground();
+  layoutDecor();
+  layoutOverlays();
+  layoutSlots();
+  layoutStickers();
+}
+
+function layoutBackground() {
   const box = backgroundBox();
 
   background.style.width = box.width + 'px';
   background.style.left = box.left + 'px';
   background.style.top = box.top + 'px';
+}
 
-  slots.forEach(function (slot) {
-    const kind = level.stickers[slot.sticker];
-    const width = kind.width * box.width;
-    const height = kind.height * box.height;
-
-    slot.element.style.width = width + 'px';
-    slot.element.style.height = height + 'px';
-    slot.element.style.left = (box.left + slot.x * box.width) + 'px';
-    slot.element.style.top = (box.top + slot.bottom * box.height - height) + 'px';
-  });
+function layoutDecor() {
+  const box = backgroundBox();
 
   decor.forEach(function (item) {
     const width = item.width * box.width;
@@ -452,13 +478,34 @@ function layout() {
     item.element.style.left = (box.left + item.x * box.width) + 'px';
     item.element.style.top = (box.top + item.bottom * box.height - height) + 'px';
   });
+}
+
+function layoutOverlays() {
+  const box = backgroundBox();
 
   overlays.forEach(function (overlay) {
     overlay.element.style.left = (scene.offsetLeft + box.left + overlay.x * box.width) + 'px';
     overlay.element.style.top = (scene.offsetTop + box.top + overlay.y * box.height) + 'px';
     overlay.element.style.width = (overlay.width * box.width) + 'px';
   });
+}
 
+// Места невидимы и тапы не ловят, поэтому в обычной игре их в разметке нет.
+// Показываются только при SHOW_SLOTS, когда надо настроить координаты.
+function layoutSlots() {
+  if (!SHOW_SLOTS) return;
+
+  slots.forEach(function (slot) {
+    const rect = slotRect(slot);
+
+    slot.element.style.left = rect.left + 'px';
+    slot.element.style.top = rect.top + 'px';
+    slot.element.style.width = (rect.right - rect.left) + 'px';
+    slot.element.style.height = (rect.bottom - rect.top) + 'px';
+  });
+}
+
+function layoutStickers() {
   const waiting = stickers.filter(function (s) { return !s.placed; });
 
   // Если хвост очереди укоротился, подтягиваем окно назад,
@@ -525,48 +572,47 @@ function slotById(id) {
   return slots.filter(function (s) { return s.id === id; })[0];
 }
 
+// ВСЕ правила игры собраны здесь, в одном месте.
+//
+// Возвращает null, если стикер сюда можно, или причину отказа строкой.
+// Новое правило добавляется одной проверкой сюда, а не ещё одним «если»
+// по коду — иначе с каждым продуктом правила расползались бы всё шире.
+function whyNot(sticker, slot) {
+  if (slot.filled) return 'место занято';
+
+  if (slot.sticker !== sticker.type) return 'сюда идёт другой стикер';
+
+  // Банка не висит в воздухе: под ней должно быть занято
+  if (slot.needs && !slotById(slot.needs).filled) return 'под этим местом пусто';
+
+  if (slot.group) {
+    // Тарелка занята другим продуктом: на ту, где лежит половина арбуза,
+    // кусочки уже не положить
+    const busy = occupiedBy(slot.group);
+    if (busy && busy !== sticker.type) return 'тарелка занята другим продуктом';
+
+    // Этот продукт уже разложен на другой тарелке — значит весь идёт туда
+    const mine = groupOf(sticker.type);
+    if (mine && mine !== slot.group) return 'этот продукт уже лежит на другой тарелке';
+  }
+
+  return null;
+}
+
 function tapSlot(slot) {
   if (!selected) return;
 
-  const sticker = selected;
-
-  if (slot.filled) {
-    reject(sticker, 'место занято');
+  const problem = whyNot(selected, slot);
+  if (problem) {
+    reject(selected, problem);
     return;
   }
 
-  if (slot.sticker !== sticker.type) {
-    reject(sticker, 'сюда идёт другой стикер');
-    return;
-  }
-
-  // Банка не висит в воздухе: под ней должно быть занято
-  if (slot.needs && !slotById(slot.needs).filled) {
-    reject(sticker, 'под этим местом пусто');
-    return;
-  }
-
-  // Тарелка занята другим продуктом: на ту, где лежит половина арбуза,
-  // кусочки уже не положить
-  const busy = occupiedBy(slot.group);
-  if (busy && busy !== sticker.type) {
-    reject(sticker, 'тарелка занята другим продуктом');
-    return;
-  }
-
-  // Этот продукт уже разложен на другой тарелке — значит весь идёт туда
-  if (slot.group && groupOf(sticker.type) && groupOf(sticker.type) !== slot.group) {
-    reject(sticker, 'этот продукт уже лежит на другой тарелке');
-    return;
-  }
-
-  place(sticker, slot);
+  place(selected, slot);
 }
 
 // Что лежит в этой группе мест (например, на левой тарелке)
 function occupiedBy(group) {
-  if (!group) return null;
-
   const taken = slots.filter(function (s) {
     return s.group === group && s.filled;
   })[0];
@@ -651,4 +697,8 @@ function feedbackSnap() {
 
 // --- Старт ---
 loadLevel('fridge');
-window.addEventListener('resize', layout);
+
+window.addEventListener('resize', function () {
+  boxCache = null;
+  layout();
+});

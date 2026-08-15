@@ -27,7 +27,7 @@ html, body {
   height: 100%;
   overflow: hidden;                /* страница не скроллится */
   overscroll-behavior: none;       /* и не тянется резинкой */
-  background: #E0DAD2;
+  background: #E0DAD2;             /* до загрузки уровня; дальше цвет задаёт сам уровень */
   font-family: system-ui, -apple-system, sans-serif;
   touch-action: manipulation;      /* убирает задержку 300 мс перед реакцией на тап */
   user-select: none;               /* долгий тап не выделяет текст */
