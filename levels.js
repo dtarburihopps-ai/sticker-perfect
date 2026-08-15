@@ -45,6 +45,7 @@ const LEVELS = {
 
     stickers: {
       cola:   { image: 'images/cola.png',        width: 0.0931, height: 0.0960 },
+      bottle: { image: 'images/bottle.png',      width: 0.1037, height: 0.1494 },
       pepper: { image: 'images/pepper.png',      width: 0.0872, height: 0.0629 },
       orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
       half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1579 },
@@ -63,6 +64,14 @@ const LEVELS = {
       { id: 'cola-high-2', sticker: 'cola', x: 0.2050, bottom: 0.1885, needs: 'cola-low-2' },
       { id: 'cola-high-3', sticker: 'cola', x: 0.2981, bottom: 0.1885, needs: 'cola-low-3' },
       { id: 'cola-high-4', sticker: 'cola', x: 0.3913, bottom: 0.1885, needs: 'cola-low-4' },
+
+      // Правая половина верхней полки: четыре бутылки встык.
+      // Ширина подобрана так, чтобы ровно четыре заняли половину
+      // и ни одна не свесилась за край. Первая — затравка.
+      { id: 'bottle-1', sticker: 'bottle', x: 0.5056, bottom: 0.2846, filled: true },
+      { id: 'bottle-2', sticker: 'bottle', x: 0.6093, bottom: 0.2846 },
+      { id: 'bottle-3', sticker: 'bottle', x: 0.7130, bottom: 0.2846 },
+      { id: 'bottle-4', sticker: 'bottle', x: 0.8168, bottom: 0.2846 },
 
       // --- Вторая полка: арбуз на тарелках ---
       // Тарелки одинаковые, и заранее не решено, какая под что. Роль
@@ -105,11 +114,12 @@ const LEVELS = {
     // Что лежит в полосе внизу. Вперемешку, а не кучками по видам —
     // иначе игрок просто выкладывает подряд и не думает вообще.
     tray: [
-      'cola', 'pepper', 'half', 'orange', 'cola',
-      'orange', 'slice', 'pepper', 'cola', 'pepper',
-      'orange', 'slice', 'cola', 'orange', 'pepper',
-      'cola', 'slice', 'orange', 'pepper', 'cola',
-      'orange', 'pepper', 'cola', 'orange', 'pepper'
+      'cola', 'pepper', 'half', 'orange', 'bottle',
+      'cola', 'orange', 'slice', 'pepper', 'cola',
+      'pepper', 'bottle', 'orange', 'slice', 'cola',
+      'orange', 'pepper', 'cola', 'slice', 'bottle',
+      'orange', 'pepper', 'cola', 'orange', 'pepper',
+      'cola', 'orange', 'pepper'
     ]
   }
 

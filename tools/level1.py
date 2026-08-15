@@ -49,6 +49,10 @@ DRAWER_FLOOR = 1105             # дно ящика: на нём стоят ов
 DRAWER_PAD = 30                 # запас вокруг слоя передней стенки
 
 COLA_COLUMNS = 4                # сколько колонок банок на верхней полке
+BOTTLE_COUNT = 4                # бутылок в правой половине верхней полки
+BOTTLE_STRIP = 5                # срезать часть обводки: у бутылки она вдвое
+                                # толще, чем у других стикеров, и съедает
+                                # пятую часть ширины вместо десятой
 PRODUCE_COLUMNS = 4             # сколько овощей в ряд в ящике
 PRODUCE_ROWS = 2
 SLICE_OVERLAP = 0.35            # насколько кусочки арбуза заходят друг на друга
@@ -58,7 +62,7 @@ CUT_THRESHOLD = 24              # порог вырезания фона; бол
 PLATE_STRIP = 4                 # сколько раз срезать обводку у тарелки
 
 
-def cut(name, out_name, strip=0):
+def cut(name, out_name, strip=0, strip_size=3):
     """Вырезает бежевый фон вокруг стикера, сохраняя белую обводку."""
     src = Image.open(os.path.join(REF, name)).convert("RGB")
     w, h = src.size
@@ -78,9 +82,10 @@ def cut(name, out_name, strip=0):
     out = src.convert("RGBA")
     out.putalpha(mask.filter(ImageFilter.GaussianBlur(0.5)))
 
-    # У тарелки обводка не нужна: она часть холодильника, а не наклейка
+    # Срезаем обводку: у тарелки насовсем (она часть холодильника,
+    # а не наклейка), у бутылки — до общей с другими стикерами толщины
     for _ in range(strip):
-        alpha = out.split()[3].filter(ImageFilter.MinFilter(9))
+        alpha = out.split()[3].filter(ImageFilter.MinFilter(strip_size))
         out.putalpha(alpha)
 
     out = out.crop(out.getbbox())
@@ -100,7 +105,8 @@ FW, FH = fridge.size
 cola = cut("кола2.png", "cola.png")
 pepper = cut("перец.png", "pepper.png")
 orange = cut("апельсин.png", "orange.png")
-plate = cut("тарелка.png", "plate.png", strip=PLATE_STRIP)
+plate = cut("тарелка.png", "plate.png", strip=PLATE_STRIP, strip_size=9)
+bottle = cut("большая кола.png", "bottle.png", strip=BOTTLE_STRIP)
 half = cut("арбуз половина.png", "melon-half.png")
 melon_slice = cut("арбуз кусочек.png", "melon-slice.png")
 
@@ -144,6 +150,15 @@ slice_h = melon_slice.height * slice_w / melon_slice.width
 print("half:   { width: %.4f, height: %.4f }," % (fx(HALF_WIDTH), fy(half_h)))
 print("slice:  { width: %.4f, height: %.4f }," % (fx(slice_w), fy(slice_h)))
 
+# Бутылки занимают правую половину полки: их ширина такая, чтобы
+# ровно BOTTLE_COUNT штук встали встык, ничего не свесив за край
+middle = (SHELF1_L + SHELF1_R) / 2.0
+right_half = SHELF1_R - middle
+bottle_w = right_half / BOTTLE_COUNT
+bottle_h = bottle.height * bottle_w / bottle.width
+print("bottle: { width: %.4f, height: %.4f },   // %.2f банки" %
+      (fx(bottle_w), fy(bottle_h), bottle_h / cola_h))
+
 plate_h = plate.height * PLATE_W / plate.width
 print("\n// --- decor: тарелки ---")
 for x in PLATE_X:
@@ -167,6 +182,12 @@ for row in range(2):
         seed = ", filled: true" if (row == 0 and col == 0) else ""
         print("{ id: '%s', sticker: 'cola', x: %.4f, bottom: %.4f%s%s }," %
               (sid, fx(cola_x0 + col * cola_w), fy(bottom), extra, seed))
+
+print("\n// --- slots: бутылки на правой половине верхней полки ---")
+for i in range(BOTTLE_COUNT):
+    seed = ", filled: true" if i == 0 else ""
+    print("{ id: 'bottle-%d', sticker: 'bottle', x: %.4f, bottom: %.4f%s }," %
+          (i + 1, fx(middle + i * bottle_w), fy(SHELF1), seed))
 
 print("\n// --- slots: овощи в ящиках ---")
 for kind, bounds, height in (("pepper", DRAWER_LEFT, pepper_h),
