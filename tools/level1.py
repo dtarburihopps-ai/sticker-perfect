@@ -42,6 +42,11 @@ PLATE_X = [77, 372]             # левые края тарелок
 PLATE_INSIDE = 0.40             # доля высоты тарелки, на которой лежит еда
 PLATE_INNER = 0.80              # какая часть тарелки отводится под кусочки
 
+SHELF3 = 848                    # третья полка: передний край, на нём стоят банки
+SHELF2_BOTTOM = 655             # низ второй полки — выше банки не залезут
+SHELF3_L, SHELF3_R = 60, 665    # края третьей полки
+PICKLE_COUNT = 6                # банок с соленьями в ряд
+
 DRAWER_TOP, DRAWER_BOTTOM = 915, 1127
 DRAWER_LEFT = (95, 345)         # левый ящик: от и до
 DRAWER_RIGHT = (368, 618)       # правый ящик
@@ -110,6 +115,45 @@ bottle = cut("большая кола.png", "bottle.png", strip=BOTTLE_STRIP)
 half = cut("арбуз половина.png", "melon-half.png")
 melon_slice = cut("арбуз кусочек.png", "melon-slice.png")
 
+# --- банки с соленьями: один лист, шесть штук ---
+pickles_src = Image.open(os.path.join(REF, "соленья3.png")).convert("RGB")
+pw_, ph_ = pickles_src.size
+work = pickles_src.copy()
+MARK = (255, 0, 255)
+for corner in [(0, 0), (pw_ - 1, 0), (0, ph_ - 1), (pw_ - 1, ph_ - 1)]:
+    ImageDraw.floodfill(work, corner, MARK, thresh=CUT_THRESHOLD)
+
+pmask = Image.new("L", (pw_, ph_), 255)
+src_px, mask_px = work.load(), pmask.load()
+for y in range(ph_):
+    for x in range(pw_):
+        if src_px[x, y] == MARK:
+            mask_px[x, y] = 0
+
+pickles_sheet = pickles_src.convert("RGBA")
+pickles_sheet.putalpha(pmask.filter(ImageFilter.GaussianBlur(0.5)))
+
+alpha_px = pickles_sheet.split()[3].load()
+columns = [sum(1 for y in range(0, ph_, 3) if alpha_px[x, y] > 60) for x in range(pw_)]
+cuts, run = [], None
+for x in range(pw_):
+    if columns[x] > 2 and run is None:
+        run = x
+    elif columns[x] <= 2 and run is not None:
+        if x - run > 40:
+            cuts.append((run, x))
+        run = None
+if run is not None and pw_ - run > 40:
+    cuts.append((run, pw_))
+
+pickles = []
+for i, (l, r) in enumerate(cuts):
+    jar = pickles_sheet.crop((l, 0, r, ph_))
+    jar = jar.crop(jar.getbbox())
+    jar.save(os.path.join(IMG, "pickle-%d.png" % (i + 1)))
+    pickles.append(jar)
+    print("  %-18s %4d x %-4d" % ("pickle-%d.png" % (i + 1), jar.width, jar.height))
+
 front_box = (DRAWER_LEFT[0] - DRAWER_PAD, DRAWER_TOP,
              DRAWER_RIGHT[1] + DRAWER_PAD, DRAWER_BOTTOM + 26)
 fridge.crop(front_box).save(os.path.join(IMG, "drawers-front.png"))
@@ -159,6 +203,15 @@ bottle_h = bottle.height * bottle_w / bottle.width
 print("bottle: { width: %.4f, height: %.4f },   // %.2f банки" %
       (fx(bottle_w), fy(bottle_h), bottle_h / cola_h))
 
+# Банки с соленьями заполняют третью полку целиком: ширина такая,
+# чтобы ровно PICKLE_COUNT штук встали встык от края до края
+pickle_w = (SHELF3_R - SHELF3_L) / float(PICKLE_COUNT)
+pickle_h = pickles[0].height * pickle_w / pickles[0].width
+room = SHELF3 - SHELF2_BOTTOM
+print("pickle: { width: %.4f, height: %.4f },   // %s" %
+      (fx(pickle_w), fy(pickle_h),
+       "влезает по высоте" if pickle_h <= room - 6 else "НЕ ВЛЕЗАЕТ, проём %d" % room))
+
 plate_h = plate.height * PLATE_W / plate.width
 print("\n// --- decor: тарелки ---")
 for x in PLATE_X:
@@ -188,6 +241,14 @@ for i in range(BOTTLE_COUNT):
     seed = ", filled: true" if i == 0 else ""
     print("{ id: 'bottle-%d', sticker: 'bottle', x: %.4f, bottom: %.4f%s }," %
           (i + 1, fx(middle + i * bottle_w), fy(SHELF1), seed))
+
+print("\n// --- slots: соленья на третьей полке ---")
+for i in range(PICKLE_COUNT):
+    print("{ id: 'pickle-%d', sticker: 'pickle', x: %.4f, bottom: %.4f }," %
+          (i + 1, fx(SHELF3_L + i * pickle_w), fy(SHELF3)))
+print("// в полосу (каждая банка своя картинка):")
+for i in range(PICKLE_COUNT):
+    print("{ type: 'pickle', image: 'images/pickle-%d.png' }," % (i + 1))
 
 print("\n// --- slots: овощи в ящиках ---")
 for kind, bounds, height in (("pepper", DRAWER_LEFT, pepper_h),

@@ -48,6 +48,10 @@ const LEVELS = {
       bottle: { image: 'images/bottle.png',      width: 0.1037, height: 0.1494 },
       pepper: { image: 'images/pepper.png',      width: 0.0872, height: 0.0629 },
       orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
+      // У солений картинка не общая: банки выглядят по-разному, а место
+      // принимает любую. Поэтому картинка задаётся в полосе, у каждой своя.
+      pickle: { width: 0.1406, height: 0.1329 },
+
       half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1579 },
       slice:  { image: 'images/melon-slice.png', width: 0.1381, height: 0.0783 }
     },
@@ -72,6 +76,18 @@ const LEVELS = {
       { id: 'bottle-2', sticker: 'bottle', x: 0.6093, bottom: 0.2846 },
       { id: 'bottle-3', sticker: 'bottle', x: 0.7130, bottom: 0.2846 },
       { id: 'bottle-4', sticker: 'bottle', x: 0.8168, bottom: 0.2846 },
+
+      // --- Третья полка: банки с соленьями ---
+      // Шесть штук встык заполняют полку ровно от края до края.
+      // Затравки нет: свободная полка в холодильнике одна, и банкам
+      // больше некуда встать. Любая банка идёт в любое свободное место —
+      // иначе игроку пришлось бы угадывать порядок.
+      { id: 'pickle-1', sticker: 'pickle', x: 0.0837, bottom: 0.6704 },
+      { id: 'pickle-2', sticker: 'pickle', x: 0.2243, bottom: 0.6704 },
+      { id: 'pickle-3', sticker: 'pickle', x: 0.3649, bottom: 0.6704 },
+      { id: 'pickle-4', sticker: 'pickle', x: 0.5056, bottom: 0.6704 },
+      { id: 'pickle-5', sticker: 'pickle', x: 0.6462, bottom: 0.6704 },
+      { id: 'pickle-6', sticker: 'pickle', x: 0.7868, bottom: 0.6704 },
 
       // --- Вторая полка: арбуз на тарелках ---
       // Тарелки одинаковые, и заранее не решено, какая под что. Роль
@@ -115,11 +131,17 @@ const LEVELS = {
     // иначе игрок просто выкладывает подряд и не думает вообще.
     tray: [
       'cola', 'pepper', 'half', 'orange', 'bottle',
+      { type: 'pickle', image: 'images/pickle-1.png' },
       'cola', 'orange', 'slice', 'pepper', 'cola',
+      { type: 'pickle', image: 'images/pickle-2.png' },
       'pepper', 'bottle', 'orange', 'slice', 'cola',
+      { type: 'pickle', image: 'images/pickle-3.png' },
       'orange', 'pepper', 'cola', 'slice', 'bottle',
+      { type: 'pickle', image: 'images/pickle-4.png' },
       'orange', 'pepper', 'cola', 'orange', 'pepper',
-      'cola', 'orange', 'pepper'
+      { type: 'pickle', image: 'images/pickle-5.png' },
+      'cola', 'orange', 'pepper',
+      { type: 'pickle', image: 'images/pickle-6.png' }
     ]
   }
 

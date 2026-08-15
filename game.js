@@ -288,12 +288,18 @@ function buildOverlays() {
   });
 }
 
-function createSticker(type) {
+// Стикер описывается либо просто типом ('cola'), либо парой тип-картинка:
+// { type: 'pickle', image: 'images/pickle-3.png' }. Второе нужно, когда
+// предметы одного вида выглядят по-разному — шесть банок с соленьями
+// ложатся в любое свободное место на полке, но каждая своя.
+function createSticker(data) {
+  const type = typeof data === 'string' ? data : data.type;
   const kind = level.stickers[type];
+  const image = (typeof data === 'object' && data.image) ? data.image : kind.image;
 
   const element = document.createElement('div');
   element.className = 'sticker';
-  element.innerHTML = '<div class="sticker-body"><img src="' + kind.image + '" alt=""></div>';
+  element.innerHTML = '<div class="sticker-body"><img src="' + image + '" alt=""></div>';
 
   const sticker = { type: type, kind: kind, element: element, placed: false, slot: null };
 
