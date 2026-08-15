@@ -50,7 +50,7 @@ const LEVELS = {
       orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
       // У солений картинка не общая: банки выглядят по-разному, а место
       // принимает любую. Поэтому картинка задаётся в полосе, у каждой своя.
-      pickle: { width: 0.1406, height: 0.1329 },
+      pickle: { width: 0.1337, height: 0.1264 },
 
       half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1579 },
       slice:  { image: 'images/melon-slice.png', width: 0.1381, height: 0.0783 }
@@ -82,12 +82,12 @@ const LEVELS = {
       // Затравки нет: свободная полка в холодильнике одна, и банкам
       // больше некуда встать. Любая банка идёт в любое свободное место —
       // иначе игроку пришлось бы угадывать порядок.
-      { id: 'pickle-1', sticker: 'pickle', x: 0.0837, bottom: 0.6704 },
-      { id: 'pickle-2', sticker: 'pickle', x: 0.2243, bottom: 0.6704 },
-      { id: 'pickle-3', sticker: 'pickle', x: 0.3649, bottom: 0.6704 },
-      { id: 'pickle-4', sticker: 'pickle', x: 0.5056, bottom: 0.6704 },
-      { id: 'pickle-5', sticker: 'pickle', x: 0.6462, bottom: 0.6704 },
-      { id: 'pickle-6', sticker: 'pickle', x: 0.7868, bottom: 0.6704 },
+      { id: 'pickle-1', sticker: 'pickle', x: 0.1046, bottom: 0.6862 },
+      { id: 'pickle-2', sticker: 'pickle', x: 0.2383, bottom: 0.6862 },
+      { id: 'pickle-3', sticker: 'pickle', x: 0.3719, bottom: 0.6862 },
+      { id: 'pickle-4', sticker: 'pickle', x: 0.5056, bottom: 0.6862 },
+      { id: 'pickle-5', sticker: 'pickle', x: 0.6392, bottom: 0.6862 },
+      { id: 'pickle-6', sticker: 'pickle', x: 0.7729, bottom: 0.6862 },
 
       // --- Вторая полка: арбуз на тарелках ---
       // Тарелки одинаковые, и заранее не решено, какая под что. Роль
