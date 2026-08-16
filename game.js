@@ -1062,9 +1062,20 @@ function feedbackSnap() {
 
 // --- Старт ---
 //
-// Альбома с выбором уровня ещё нет, поэтому второй уровень открывается
-// адресом: ?level=fridge. Одна строка вместо правки кода каждый раз.
-loadLevel(new URLSearchParams(location.search).get('level') || 'door');
+// Альбома с выбором уровня ещё нет, поэтому уровень открывается адресом:
+// ?level=fridge. Одна строка вместо правки кода каждый раз.
+//
+// Если такого уровня нет — открываем первый, а не падаем. Ссылка могла
+// остаться со старой версии или уехать в телеграм раньше, чем сам уровень:
+// пустой чёрный экран в этом случае выглядит как сломанная игра.
+function startLevel() {
+  const asked = new URLSearchParams(location.search).get('level');
+  if (asked && !LEVELS[asked]) log('Уровня', asked, 'здесь нет — открываем первый');
+
+  return (asked && LEVELS[asked]) ? asked : Object.keys(LEVELS)[0];
+}
+
+loadLevel(startLevel());
 
 window.addEventListener('resize', function () {
   boxCache = null;
