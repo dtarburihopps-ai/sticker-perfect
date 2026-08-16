@@ -63,23 +63,23 @@ const LEVELS = {
     // Размер магнита задан не шириной, а равной площадью: иначе высокий
     // овал с котом выглядел бы вдвое крупнее звезды при той же ширине.
     stickers: {
-      cat:   { image: 'images/magnet-cat.png',   width: 0.1517, height: 0.1266 },
-      daisy: { image: 'images/magnet-daisy.png', width: 0.1658, height: 0.1158 },
-      photo: { image: 'images/magnet-photo.png', width: 0.1565, height: 0.1228 },
-      heart: { image: 'images/magnet-heart.png', width: 0.1794, height: 0.1071 },
-      egg:   { image: 'images/magnet-egg.png',   width: 0.1501, height: 0.1280 },
-      toast: { image: 'images/magnet-toast.png', width: 0.1615, height: 0.1189 },
-      tulip: { image: 'images/magnet-tulip.png', width: 0.1617, height: 0.1188 },
-      mug:   { image: 'images/magnet-mug.png',   width: 0.1772, height: 0.1084 },
-      plant: { image: 'images/magnet-plant.png', width: 0.1671, height: 0.1149 },
-      star:  { image: 'images/magnet-star.png',  width: 0.1714, height: 0.1120 }
+      cat:   { image: 'images/magnet-cat.png',   width: 0.1264, height: 0.1055 },
+      daisy: { image: 'images/magnet-daisy.png', width: 0.1382, height: 0.0965 },
+      photo: { image: 'images/magnet-photo.png', width: 0.1304, height: 0.1023 },
+      heart: { image: 'images/magnet-heart.png', width: 0.1495, height: 0.0892 },
+      egg:   { image: 'images/magnet-egg.png',   width: 0.1251, height: 0.1066 },
+      toast: { image: 'images/magnet-toast.png', width: 0.1346, height: 0.0991 },
+      tulip: { image: 'images/magnet-tulip.png', width: 0.1348, height: 0.0990 },
+      mug:   { image: 'images/magnet-mug.png',   width: 0.1477, height: 0.0903 },
+      plant: { image: 'images/magnet-plant.png', width: 0.1393, height: 0.0958 },
+      star:  { image: 'images/magnet-star.png',  width: 0.1429, height: 0.0934 }
     },
 
     // Затравка: кот висит на двери с самого начала. Он и объясняет
     // без единого слова, что это магниты и что клеить надо сюда.
     // x и y — левый верхний угол, доли от фона.
     placed: [
-      { sticker: 'cat', x: 0.2730, y: 0.1863 }
+      { sticker: 'cat', x: 0.2856, y: 0.1969 }
     ],
 
     tray: ['daisy', 'toast', 'heart', 'mug', 'photo', 'star', 'egg', 'plant', 'tulip']
