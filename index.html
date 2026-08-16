@@ -52,6 +52,15 @@
     <!-- Кот выглядывает снизу, когда уровень собран. Это и есть финал -->
     <img id="mascot" src="images/cat.png" alt="">
 
+    <!-- Стрелка «дальше». Стоит ровно в середине экрана и ни к чему не
+         привязана: кот со временем будет меняться и вылезать с разных
+         сторон, а кнопка от этого не поедет -->
+    <button id="next-level" aria-label="Следующий уровень" hidden>
+      <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M5 12 H18 M13 7 L18 12 L13 17"></path>
+      </svg>
+    </button>
+
   </div>
 
   <script src="sound.js"></script>

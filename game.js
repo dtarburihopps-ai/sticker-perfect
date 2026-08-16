@@ -36,6 +36,11 @@ const TRAY_PADDING = 20;   // отступ от краёв полосы
 const TRAY_VISIBLE = 5;
 const TRAY_ARROW = 38;     // место по краям полосы под стрелки листания
 
+// Высота полосы по умолчанию. Читается из стилей, чтобы одно и то же
+// число не жило в двух файлах; уровень может попросить свою.
+const TRAY_HEIGHT = parseFloat(
+  getComputedStyle(document.documentElement).getPropertyValue('--tray-height'));
+
 // Наименьшая зона попадания. Продукты на полке бывают по 33 px,
 // а палец промахиваться не должен.
 const TOUCH_MIN = 44;
@@ -71,6 +76,7 @@ const prevButton = document.getElementById('tray-prev');
 const nextButton = document.getElementById('tray-next');
 const vibrationButton = document.getElementById('vibration-toggle');
 const mascot = document.getElementById('mascot');
+const nextLevelButton = document.getElementById('next-level');
 
 // --- Вибрация ---
 let vibrationOn = true;
@@ -90,7 +96,10 @@ vibrationButton.addEventListener('click', function () {
 // ---------------------------------------------------------------
 
 let level = null;      // описание уровня из levels.js
+let levelName = '';    // как уровень называется в LEVELS — нужно, чтобы знать следующий
 let free = false;      // уровень без мест: стикер клеится куда угодно
+let ordered = false;   // уровень на порядок: место принимает любой стикер
+let trayVisible = TRAY_VISIBLE;   // сколько стикеров показывать в полосе
 let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
 let decor = [];        // обстановка: лежит с начала уровня и не двигается
@@ -103,12 +112,12 @@ let finished = false;  // уровень уже собран
 // Листание полосы. Само по себе оно не обязательно — стикеры и так
 // подъезжают, когда предыдущие улетают. Но игрок может захотеть
 // посмотреть, что там дальше, и это его право.
-prevButton.addEventListener('click', function () { scrollTray(-TRAY_VISIBLE); });
-nextButton.addEventListener('click', function () { scrollTray(TRAY_VISIBLE); });
+prevButton.addEventListener('click', function () { scrollTray(-trayVisible); });
+nextButton.addEventListener('click', function () { scrollTray(trayVisible); });
 
 function scrollTray(step) {
   const waiting = stickers.filter(function (s) { return !s.placed; });
-  const limit = Math.max(0, waiting.length - TRAY_VISIBLE);
+  const limit = Math.max(0, waiting.length - trayVisible);
 
   trayOffset = Math.min(Math.max(0, trayOffset + step), limit);
   log('Полоса пролистана, показываем с', trayOffset + 1);
@@ -117,13 +126,23 @@ function scrollTray(step) {
 
 function loadLevel(name) {
   level = LEVELS[name];
+  levelName = name;
 
-  // Два устройства уровня. В холодильнике места посчитаны заранее,
-  // на дверце их нет вообще — там магнит клеится куда угодно.
-  // Классом на экране пользуется таблица стилей: приклеенный магнит
-  // можно снять и переклеить, а продукт на полке — нет.
+  // Три устройства уровня. В холодильнике места посчитаны заранее и каждое
+  // ждёт свой продукт; на дверце мест нет вообще; в коробке места есть,
+  // но карандаш в них подходит любой — правильным считается только порядок.
+  //
+  // Классом на экране пользуется таблица стилей: там, где стикер можно
+  // снять и переложить, приклеенный ловит тапы, а на полке — нет.
   free = level.mode === 'free';
-  app.classList.toggle('free', free);
+  ordered = level.mode === 'order';
+  app.classList.toggle('movable', free || ordered);
+
+  // Полоса внизу подстраивается под уровень: карандаши длинные и узкие,
+  // при обычной высоте восемь штук ужимаются в ниточки, в которые не попасть.
+  trayVisible = level.trayVisible || TRAY_VISIBLE;
+  document.documentElement.style.setProperty(
+    '--tray-height', (level.trayHeight || TRAY_HEIGHT) + 'px');
 
   // Цвет стены задаёт уровень, а не таблица стилей: у следующего уровня
   // он будет свой. Красим и страницу тоже, чтобы поля по краям совпадали.
@@ -164,6 +183,7 @@ function buildSlots() {
       needs: data.needs || null,
       group: data.group || null,
       filled: !!data.filled,
+      fixed: !!data.fixed,      // затравку с этого места не снять
       element: element
     };
 
@@ -192,7 +212,9 @@ scene.addEventListener('click', function (event) {
     return;
   }
 
-  const spot = slotAt(x, y, selected.type);
+  // В коробке с карандашами место принимает любой стикер, поэтому
+  // не спрашиваем «есть ли место под этот тип», а берём ближайшее
+  const spot = slotAt(x, y, ordered ? null : selected.type);
   if (spot) {
     tapSlot(spot);
     return;
@@ -206,7 +228,11 @@ scene.addEventListener('click', function (event) {
 // всего 34 px, а промахиваться по ней игрок не должен.
 function slotRect(slot) {
   const box = backgroundBox();
-  const kind = level.stickers[slot.sticker];
+
+  // Обычно размер места берётся у продукта, который сюда идёт. В коробке
+  // продукт заранее не известен — подойдёт любой карандаш, и все они
+  // одного размера, поэтому уровень задаёт его один раз в slotSize.
+  const kind = slot.sticker ? level.stickers[slot.sticker] : level.slotSize;
 
   const width = kind.width * box.width;
   const height = kind.height * box.height;
@@ -243,8 +269,12 @@ function slotAt(x, y, type) {
     const distance = dx * dx + dy * dy;
 
     // Свободное место всегда важнее занятого: если они лежат друг на друге,
-    // игрок целится в свободное
-    const penalty = slot.filled ? 1e9 : 0;
+    // игрок целится в свободное.
+    //
+    // В коробке с карандашами наоборот: места не накладываются, стоят в ряд,
+    // а тап по занятому — это обмен, обычное действие. Со штрафом игрок
+    // целился бы в один карандаш, а менялся бы соседний свободный.
+    const penalty = (slot.filled && !ordered) ? 1e9 : 0;
 
     if (distance + penalty < bestDistance) {
       bestDistance = distance + penalty;
@@ -264,7 +294,9 @@ function buildStickers() {
       const sticker = createSticker(slot.sticker);
       sticker.placed = true;
       sticker.slot = slot;
+      sticker.fixed = slot.fixed;
       sticker.element.classList.add('placed');
+      if (slot.fixed) sticker.element.classList.add('fixed');
     }
   });
 
@@ -335,7 +367,7 @@ function createSticker(data) {
   // У стикера всегда занято что-то одно из двух.
   const sticker = {
     type: type, kind: kind, element: element,
-    placed: false, slot: null, spot: null
+    placed: false, slot: null, spot: null, fixed: false
   };
 
   element.addEventListener('click', function () { selectSticker(sticker); });
@@ -564,14 +596,14 @@ function layoutStickers() {
 
   // Если хвост очереди укоротился, подтягиваем окно назад,
   // иначе полоса окажется пустой при непустой очереди
-  trayOffset = Math.min(trayOffset, Math.max(0, waiting.length - TRAY_VISIBLE));
+  trayOffset = Math.min(trayOffset, Math.max(0, waiting.length - trayVisible));
 
-  const visible = waiting.slice(trayOffset, trayOffset + TRAY_VISIBLE);
+  const visible = waiting.slice(trayOffset, trayOffset + trayVisible);
   const places = trayLayout(visible);
 
   // Стрелка есть только тогда, когда ей есть что сделать
   prevButton.hidden = trayOffset === 0;
-  nextButton.hidden = trayOffset + TRAY_VISIBLE >= waiting.length;
+  nextButton.hidden = trayOffset + trayVisible >= waiting.length;
 
   stickers.forEach(function (sticker) {
     if (sticker.placed) {
@@ -612,9 +644,13 @@ function hold(sticker) {
 }
 
 function selectSticker(sticker) {
-  // Приклеенный стикер не трогаем — кроме магнитов на дверце.
-  // Там снять и переклеить это часть игры, а не ошибка.
-  if (sticker.placed && !free) return;
+  // Приклеенный стикер не трогаем — кроме магнитов на дверце и карандашей
+  // в коробке. Там снять и переложить это часть игры, а не ошибка.
+  if (sticker.placed && !free && !ordered) return;
+
+  // Затравки стоят намертво: они показывают, где светлое, а где тёмное,
+  // и если их можно утащить, подсказка перестаёт быть подсказкой
+  if (sticker.fixed) return;
 
   // Повторный тап по выбранному — снять выбор, иначе игрок в ловушке
   if (selected === sticker) {
@@ -642,6 +678,11 @@ function slotById(id) {
 // Новое правило добавляется одной проверкой сюда, а не ещё одним «если»
 // по коду — иначе с каждым продуктом правила расползались бы всё шире.
 function whyNot(sticker, slot) {
+  // В коробке с карандашами запретов нет вообще: любой карандаш
+  // встаёт в любое место. Правильным считается только порядок,
+  // и проверяет его конец уровня, а не это место.
+  if (ordered) return null;
+
   if (slot.filled) return 'место занято';
 
   if (slot.sticker !== sticker.type) return 'сюда идёт другой стикер';
@@ -666,6 +707,14 @@ function whyNot(sticker, slot) {
 function tapSlot(slot) {
   if (!selected) return;
 
+  // Занятое место в коробке — не отказ, а обмен: сортировка вся про
+  // перестановки, и без обмена каждая правка стоила бы трёх тапов
+  // вместо двух.
+  if (ordered && slot.filled) {
+    swap(selected, slot);
+    return;
+  }
+
   const problem = whyNot(selected, slot);
   if (problem) {
     reject(selected, problem);
@@ -673,6 +722,48 @@ function tapSlot(slot) {
   }
 
   place(selected, slot);
+}
+
+// Кто лежит на этом месте
+function stickerIn(slot) {
+  return stickers.filter(function (s) { return s.placed && s.slot === slot; })[0];
+}
+
+// Обмен: игрок кладёт карандаш туда, где уже лежит другой.
+//
+// Тот, что лежал, уезжает туда, откуда пришёл новый: на его место
+// в коробке или обратно в полосу, если новый взят оттуда.
+function swap(sticker, slot) {
+  const other = stickerIn(slot);
+  const home = sticker.slot;
+
+  if (!other || other.fixed) {
+    reject(sticker, 'этот карандаш стоит намертво');
+    return;
+  }
+
+  if (home) {
+    other.slot = home;
+    home.filled = true;
+    log('Меняются местами:', sticker.type, '↔', other.type);
+    fly(other, home.id);
+  } else {
+    other.placed = false;
+    other.slot = null;
+    other.element.classList.remove('placed');
+    other.element.style.zIndex = '';
+
+    // Класс полёта оставляем на время переезда, чтобы карандаш
+    // не прыгнул в полосу рывком, а доехал
+    other.element.classList.add('flying');
+    setTimeout(function () { other.element.classList.remove('flying'); }, FLY_TIME);
+    log('Уехал обратно в полосу:', other.type);
+  }
+
+  // Место игрока освободилось ещё до полёта: иначе place() снял бы
+  // отметку «занято» с того места, куда только что уехал сосед
+  sticker.slot = null;
+  place(sticker, slot);
 }
 
 // Что лежит в этой группе мест (например, на левой тарелке)
@@ -694,6 +785,9 @@ function groupOf(type) {
 }
 
 function place(sticker, slot) {
+  // Карандаш мог переехать с другого места — оно освобождается
+  if (sticker.slot) sticker.slot.filled = false;
+
   sticker.slot = slot;
   slot.filled = true;
 
@@ -869,6 +963,14 @@ function checkFinished() {
   if (finished) return;
   if (stickers.some(function (s) { return !s.placed; })) return;
 
+  // В коробке мало разложить всё — надо разложить правильно. Пока порядок
+  // не тот, игра молчит: кот не пришёл, значит ещё не то. Никаких «неверно»
+  // тут нет нарочно, игрок должен догадаться сам.
+  if (ordered && !inOrder()) {
+    log('Всё в коробке, но не по порядку');
+    return;
+  }
+
   finished = true;
   log('Уровень собран');
 
@@ -877,8 +979,56 @@ function checkFinished() {
   setTimeout(function () {
     mascot.classList.add('show');
     log('Кот пришёл');
-  }, MASCOT_DELAY);
+
+    // Стрелка появляется в ту же секунду, что и кот.
+    // Если следующего уровня нет — стрелке некуда вести, и её просто нет.
+    if (nextLevelName()) {
+      nextLevelButton.hidden = false;
+      // hidden сняли — даём браузеру мгновение, иначе он посчитает, что
+      // кнопка всегда была видимой, и появление не проиграется.
+      // setTimeout, а не requestAnimationFrame: в фоновой вкладке кадров
+      // нет, и кнопка осталась бы невидимой навсегда.
+      setTimeout(function () {
+        nextLevelButton.classList.add('show');
+      }, 20);
+    }
+  }, level.mascotDelay || MASCOT_DELAY);
 }
+
+// Карандаши стоят по порядку: слева направо оттенки идут от светлого
+// к тёмному. Порядок мест берём по их координате, а не по тому, в каком
+// порядке они записаны в levels.js — на экране игрок видит именно левее-правее.
+function inOrder() {
+  const row = slots.slice().sort(function (a, b) { return a.x - b.x; });
+
+  let previous = 0;
+  for (let i = 0; i < row.length; i++) {
+    const sticker = stickerIn(row[i]);
+    if (!sticker) return false;
+    if (sticker.kind.rank <= previous) return false;
+    previous = sticker.kind.rank;
+  }
+
+  return true;
+}
+
+// Следующий уровень — просто следующий по порядку в LEVELS.
+// Отдельного списка не заводим: порядок уже задан тем, как уровни
+// написаны в levels.js, и держать его в двух местах незачем.
+function nextLevelName() {
+  const names = Object.keys(LEVELS);
+  return names[names.indexOf(levelName) + 1] || null;
+}
+
+// Переход адресом, с перезагрузкой страницы. Так уровень начинается
+// с чистого листа: не надо руками разбирать предыдущий.
+nextLevelButton.addEventListener('click', function () {
+  const next = nextLevelName();
+  if (!next) return;
+
+  log('Идём дальше:', next);
+  location.search = '?level=' + next;
+});
 
 // Мягкое «не туда»: стикер дрогнул, выбор НЕ снимается.
 // Смысл — сказать «не сюда», а не «ты ошиблась».

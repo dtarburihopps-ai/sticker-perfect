@@ -14,6 +14,10 @@
   --stick-time:   220ms;   /* приклеивание */
   --reject-time:  150ms;   /* «не туда» */
   --mascot-time:  620ms;   /* кот выезжает снизу в конце уровня */
+  --next-time:    420ms;   /* стрелка «дальше» проявляется в центре экрана */
+
+  --next-bg:      #B7DDA0;  /* пастельная зелень кнопки «дальше» */
+  --next-ink:     #3B6D11;  /* сама стрелка */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -196,14 +200,23 @@ html, body {
   pointer-events: none;
 }
 
-/* На дверце иначе: магнит можно снять и переклеить, поэтому тапы он ловит.
-   Но только пока рука пуста — если игрок уже держит стикер, тап по магниту
-   значит «клей сюда», а не «сними этот», и должен пройти насквозь к сцене. */
-#app.free .sticker.placed {
+/* На дверце и в коробке с карандашами иначе: приклеенное можно снять
+   и переложить, поэтому тапы оно ловит.
+   Но только пока рука пуста — если игрок уже держит стикер, тап по
+   занятому месту значит «клади сюда», а не «сними этот», и должен
+   пройти насквозь к сцене. */
+#app.movable .sticker.placed {
   pointer-events: auto;
 }
 
-#app.free.holding .sticker.placed {
+#app.movable.holding .sticker.placed {
+  pointer-events: none;
+}
+
+/* Затравка стоит намертво в любом случае: она подсказка, а не фишка.
+   Селектор с #app нарочно: иначе правило выше, у которого есть id,
+   окажется сильнее, и затравка снова начнёт ловить тапы. */
+#app .sticker.fixed {
   pointer-events: none;
 }
 
@@ -278,6 +291,46 @@ html, body {
 /* Виден по грудь: снизу торчит примерно три четверти картинки */
 #mascot.show {
   transform: translate(-50%, 28%);
+}
+
+/* --- Стрелка «дальше»: появляется вместе с котом, когда уровень собран ---
+   Держится точно в середине экрана и с котом никак не связана: кот ещё
+   поменяется и будет вылезать с разных сторон, а кнопка останется тут же. */
+#next-level {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--next-bg);
+  color: var(--next-ink);
+  border: 3px solid #F7F4EE;      /* светлый ободок: кнопка читается на любом фоне */
+  cursor: pointer;
+  z-index: 5;                     /* выше кота */
+
+  /* Скрытое состояние. hidden в разметке убирается сразу, иначе
+     не проиграется появление — прячем именно прозрачностью */
+  opacity: 0;
+  transform: translate(-50%, -50%) scale(0.7);
+  pointer-events: none;
+  transition:
+    opacity   var(--next-time) ease-out,
+    transform var(--next-time) cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+#next-level.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+#next-level:active {
+  transform: translate(-50%, -50%) scale(0.92);
+  transition-duration: 80ms;
 }
 
 /* --- Иконка выключения вибрации: единственная кнопка в игре --- */

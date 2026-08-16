@@ -24,3 +24,6 @@ tools/grid-preview.png
 
 # Превью области дверцы — тоже рабочий файл, пересоздаётся door.py
 tools/door-preview.png
+
+# Превью коробки с карандашами — рабочий файл, пересоздаётся pencils.py
+tools/pencils-preview.png
