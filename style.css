@@ -14,10 +14,10 @@
   --stick-time:   220ms;   /* приклеивание */
   --reject-time:  150ms;   /* «не туда» */
   --mascot-time:  620ms;   /* кот выезжает снизу в конце уровня */
-  --next-time:    420ms;   /* стрелка «дальше» проявляется в центре экрана */
+  --next-time:    420ms;   /* стрелка «дальше» проявляется в конце уровня */
 
-  --next-bg:      #B7DDA0;  /* пастельная зелень кнопки «дальше» */
-  --next-ink:     #3B6D11;  /* сама стрелка */
+  --next-bg:      #7FBF4D;  /* зелень кнопки «дальше» */
+  --next-ink:     #FFFFFF;  /* сама стрелка */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -299,16 +299,16 @@ html, body {
 #next-level {
   position: absolute;
   left: 50%;
-  top: 50%;
-  width: 68px;
-  height: 68px;
+  top: 44%;                       /* чуть выше середины экрана */
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   background: var(--next-bg);
   color: var(--next-ink);
-  border: 3px solid #F7F4EE;      /* светлый ободок: кнопка читается на любом фоне */
+  border: 5px solid #F7F4EE;      /* светлый ободок: кнопка читается на любом фоне */
   cursor: pointer;
   z-index: 5;                     /* выше кота */
 
