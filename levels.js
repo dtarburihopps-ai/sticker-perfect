@@ -235,35 +235,35 @@ const LEVELS = {
     // rank — правильное место в ряду. Оно же порядковый номер оттенка:
     // 1 самый светлый, 10 самый тёмный.
     stickers: {
-      'pencil-1':  { image: 'images/pencil-1.png',  width: 0.0569, height: 0.2681, rank: 1 },
-      'pencil-2':  { image: 'images/pencil-2.png',  width: 0.0569, height: 0.2681, rank: 2 },
-      'pencil-3':  { image: 'images/pencil-3.png',  width: 0.0569, height: 0.2681, rank: 3 },
-      'pencil-4':  { image: 'images/pencil-4.png',  width: 0.0569, height: 0.2681, rank: 4 },
-      'pencil-5':  { image: 'images/pencil-5.png',  width: 0.0569, height: 0.2681, rank: 5 },
-      'pencil-6':  { image: 'images/pencil-6.png',  width: 0.0569, height: 0.2681, rank: 6 },
-      'pencil-7':  { image: 'images/pencil-7.png',  width: 0.0569, height: 0.2681, rank: 7 },
-      'pencil-8':  { image: 'images/pencil-8.png',  width: 0.0569, height: 0.2681, rank: 8 },
-      'pencil-9':  { image: 'images/pencil-9.png',  width: 0.0569, height: 0.2681, rank: 9 },
-      'pencil-10': { image: 'images/pencil-10.png', width: 0.0569, height: 0.2681, rank: 10 }
+      'pencil-1':  { image: 'images/pencil-1.png',  width: 0.0689, height: 0.2681, rank: 1 },
+      'pencil-2':  { image: 'images/pencil-2.png',  width: 0.0689, height: 0.2681, rank: 2 },
+      'pencil-3':  { image: 'images/pencil-3.png',  width: 0.0689, height: 0.2681, rank: 3 },
+      'pencil-4':  { image: 'images/pencil-4.png',  width: 0.0689, height: 0.2681, rank: 4 },
+      'pencil-5':  { image: 'images/pencil-5.png',  width: 0.0689, height: 0.2681, rank: 5 },
+      'pencil-6':  { image: 'images/pencil-6.png',  width: 0.0689, height: 0.2681, rank: 6 },
+      'pencil-7':  { image: 'images/pencil-7.png',  width: 0.0689, height: 0.2681, rank: 7 },
+      'pencil-8':  { image: 'images/pencil-8.png',  width: 0.0689, height: 0.2681, rank: 8 },
+      'pencil-9':  { image: 'images/pencil-9.png',  width: 0.0689, height: 0.2681, rank: 9 },
+      'pencil-10': { image: 'images/pencil-10.png', width: 0.0689, height: 0.2681, rank: 10 }
     },
 
     // Размер места. В холодильнике его брали у продукта, который сюда идёт,
     // а здесь продукта нет — подойдёт любой, и все они одного размера.
-    slotSize: { width: 0.0569, height: 0.2681 },
+    slotSize: { width: 0.0689, height: 0.2681 },
 
     // Десять колонок в коробке. Крайние заняты затравками и не двигаются:
     // они показывают, с какой стороны светлое, а с какой тёмное.
     slots: [
-      { id: 'p1',  x: 0.1555, bottom: 0.7506, sticker: 'pencil-1',  filled: true, fixed: true },
-      { id: 'p2',  x: 0.2244, bottom: 0.7506 },
-      { id: 'p3',  x: 0.2933, bottom: 0.7506 },
-      { id: 'p4',  x: 0.3622, bottom: 0.7506 },
-      { id: 'p5',  x: 0.4310, bottom: 0.7506 },
-      { id: 'p6',  x: 0.4999, bottom: 0.7506 },
-      { id: 'p7',  x: 0.5688, bottom: 0.7506 },
-      { id: 'p8',  x: 0.6377, bottom: 0.7506 },
-      { id: 'p9',  x: 0.7065, bottom: 0.7506 },
-      { id: 'p10', x: 0.7754, bottom: 0.7506, sticker: 'pencil-10', filled: true, fixed: true }
+      { id: 'p1',  x: 0.1495, bottom: 0.7506, sticker: 'pencil-1',  filled: true, fixed: true },
+      { id: 'p2',  x: 0.2184, bottom: 0.7506 },
+      { id: 'p3',  x: 0.2873, bottom: 0.7506 },
+      { id: 'p4',  x: 0.3562, bottom: 0.7506 },
+      { id: 'p5',  x: 0.4251, bottom: 0.7506 },
+      { id: 'p6',  x: 0.4939, bottom: 0.7506 },
+      { id: 'p7',  x: 0.5628, bottom: 0.7506 },
+      { id: 'p8',  x: 0.6317, bottom: 0.7506 },
+      { id: 'p9',  x: 0.7006, bottom: 0.7506 },
+      { id: 'p10', x: 0.7694, bottom: 0.7506, sticker: 'pencil-10', filled: true, fixed: true }
     ],
 
     // В полосе карандаши лежат вперемешку — иначе сортировать нечего

@@ -9,9 +9,9 @@
     python tools/pencils.py
 
 Скрипт собирает фон (стол + крышка + коробка одной картинкой), режет
-карандаши и печатает готовые строки для levels.js. Пока листа от
-Себастиана нет, рисует временные карандаши сам — ровно того размера,
-что заказан в ART-BRIEF-карандаши.md, чтобы настоящие встали без правок.
+карандаши с листа Себастиана, приводит их к одному размеру и печатает
+готовые строки для levels.js. Заодно рисует tools/pencils-preview.png —
+на нём видно собранную коробку.
 """
 
 import os
@@ -207,21 +207,23 @@ area_bottom = BOX_Y + (AREA_BOTTOM - BOX_SPRITE[1]) * BOX_SCALE
 step = AREA_W * BOX_SCALE / PENCILS
 height = area_bottom - area_top
 
-# Ширина карандаша выводится из картинки, а не назначается: если Себастиан
-# нарисует другую пропорцию, ряд перестанет сходиться, и это надо увидеть.
+# Ширина карандаша — ровно колонка, без просвета: десять штук заполняют
+# коробку от стенки до стенки.
+#
+# Нарисованы они чуть тоньше заказанного (1 : 7,9 вместо 1 : 7,3), и если
+# брать ширину из картинки, между соседями остаются щели. Поэтому картинка
+# растягивается на недостающее: на прямом цилиндре несколько процентов
+# не читаются, а щели в ряду видно сразу.
 sample = Image.open(os.path.join(IMG, "pencil-1.png"))
-width = height * sample.width / float(sample.height)
-
-slack = step - width
-if slack < 0:
-    print("\n!! карандаши шире места на %.1f px — ряд не сойдётся" % -slack)
+width = step
+stretch = width / (height * sample.width / float(sample.height))
 
 print("\n// --- цвет стола ---")
 print("wall: '#%02X%02X%02X'," % background.convert("RGB").getpixel((2, 2)))
 
 print("\n// --- карандаши ---")
-print("// пропорция картинки 1 : %.1f, зазор между соседями %.1f px"
-      % (sample.height / float(sample.width), slack))
+print("// картинка 1 : %.1f, на экране 1 : %.1f — растянута на %.0f%%"
+      % (sample.height / float(sample.width), height / width, (stretch - 1) * 100))
 for i in range(PENCILS):
     print("'pencil-%d': { image: 'images/pencil-%d.png', width: %.4f, height: %.4f, rank: %d },"
           % (i + 1, i + 1, width / BG_W, height / BG_H, i + 1))
@@ -230,7 +232,7 @@ print("\n// --- места: десять колонок в коробке ---")
 print("slotSize: { width: %.4f, height: %.4f }," % (width / BG_W, height / BG_H))
 print("slots: [")
 for i in range(PENCILS):
-    left = area_left + step * i + slack / 2
+    left = area_left + step * i
     seed = ""
     if i == 0:
         seed = ", sticker: 'pencil-1', filled: true, fixed: true"
@@ -250,7 +252,7 @@ preview = background.copy()
 for i in range(PENCILS):
     art = Image.open(os.path.join(IMG, "pencil-%d.png" % (i + 1))).convert("RGBA")
     art = art.resize((int(width), int(height)), Image.LANCZOS)
-    preview.alpha_composite(art, (int(area_left + step * i + slack / 2), int(area_top)))
+    preview.alpha_composite(art, (int(area_left + step * i), int(area_top)))
 
 preview.convert("RGB").save(os.path.join(HERE, "pencils-preview.png"))
 print("Превью: tools/pencils-preview.png")
