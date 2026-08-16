@@ -55,7 +55,23 @@ html = read("index.html")
 body = re.search(r"<body>(.*)</body>", html, re.S).group(1)
 body = re.sub(r"\s*<script[^>]*></script>", "", body)   # скрипты подключим сами
 
-page = u"""<title>Sticker Perfect</title>
+# Картинки, вписанные прямо в разметку (например кот), тоже вшиваем.
+# В HTML пути в двойных кавычках: src="images/cat.png"
+for path in sorted(set(re.findall(r'"(images/[^"]+)"', body))):
+    body = body.replace('"%s"' % path, '"%s"' % data_uri(path))
+
+# Шапку страницы собираем сами, поэтому её содержимое приходится держать
+# в согласии с index.html руками. Три строчки ниже обязательны:
+#   charset   — без него весь русский текст превращается в кракозябры;
+#   viewport  — без него на телефоне экран не подгоняется по размеру;
+#   telegram  — без него игра не видит, что запущена внутри мини-аппа,
+#               и молча остаётся без вибрации и разворота на весь экран.
+# Скрипт телеграма грузится снаружи и специально не вшивается в файл:
+# внутри телеграма он доступен всегда, а подделывать его нельзя.
+page = u"""<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Sticker Perfect</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 %s
