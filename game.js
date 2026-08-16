@@ -90,6 +90,7 @@ vibrationButton.addEventListener('click', function () {
 // ---------------------------------------------------------------
 
 let level = null;      // описание уровня из levels.js
+let free = false;      // уровень без мест: стикер клеится куда угодно
 let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
 let decor = [];        // обстановка: лежит с начала уровня и не двигается
@@ -117,6 +118,13 @@ function scrollTray(step) {
 function loadLevel(name) {
   level = LEVELS[name];
 
+  // Два устройства уровня. В холодильнике места посчитаны заранее,
+  // на дверце их нет вообще — там магнит клеится куда угодно.
+  // Классом на экране пользуется таблица стилей: приклеенный магнит
+  // можно снять и переклеить, а продукт на полке — нет.
+  free = level.mode === 'free';
+  app.classList.toggle('free', free);
+
   // Цвет стены задаёт уровень, а не таблица стилей: у следующего уровня
   // он будет свой. Красим и страницу тоже, чтобы поля по краям совпадали.
   scene.style.background = level.wall;
@@ -136,6 +144,7 @@ function loadLevel(name) {
 
 function buildSlots() {
   slots = [];
+  if (!level.slots) return;
 
   level.slots.forEach(function (data) {
     // Место — это данные, а не элемент страницы: тапы ловит сцена,
@@ -176,6 +185,12 @@ scene.addEventListener('click', function (event) {
   const box = scene.getBoundingClientRect();
   const x = event.clientX - box.left;
   const y = event.clientY - box.top;
+
+  // Уровень без мест: клеим прямо сюда, правила проверяет dropHere
+  if (free) {
+    dropHere(x, y);
+    return;
+  }
 
   const spot = slotAt(x, y, selected.type);
   if (spot) {
@@ -253,6 +268,15 @@ function buildStickers() {
     }
   });
 
+  // Затравки уровня без мест: магниты, которые висят с самого начала.
+  // Места у них нет, есть точка на фоне, куда их однажды приклеили.
+  (level.placed || []).forEach(function (data) {
+    const sticker = createSticker(data.sticker);
+    sticker.placed = true;
+    sticker.spot = { x: data.x, y: data.y };
+    sticker.element.classList.add('placed');
+  });
+
   // Стикеры игрока — в полосе внизу
   level.tray.forEach(function (type) {
     createSticker(type);
@@ -307,7 +331,12 @@ function createSticker(data) {
   element.className = 'sticker';
   element.innerHTML = '<div class="sticker-body"><img src="' + image + '" alt=""></div>';
 
-  const sticker = { type: type, kind: kind, element: element, placed: false, slot: null };
+  // slot — место в холодильнике, spot — точка на дверце.
+  // У стикера всегда занято что-то одно из двух.
+  const sticker = {
+    type: type, kind: kind, element: element,
+    placed: false, slot: null, spot: null
+  };
 
   element.addEventListener('click', function () { selectSticker(sticker); });
   stickersLayer.appendChild(element);
@@ -398,6 +427,19 @@ function positionInSlot(sticker, slot) {
     x: scene.offsetLeft + box.left + slot.x * box.width,
     // bottom — линия, на которой стикер СТОИТ, поэтому вычитаем его высоту
     y: scene.offsetTop + box.top + slot.bottom * box.height - size.height
+  };
+}
+
+// Где стикер лежит на экране. В холодильнике это его место на полке,
+// на дверце — та точка, куда его приклеил игрок.
+function stickerPosition(sticker) {
+  if (!sticker.spot) return positionInSlot(sticker, sticker.slot);
+
+  const box = backgroundBox();
+
+  return {
+    x: scene.offsetLeft + box.left + sticker.spot.x * box.width,
+    y: scene.offsetTop + box.top + sticker.spot.y * box.height
   };
 }
 
@@ -537,7 +579,7 @@ function layoutStickers() {
       sticker.element.style.display = '';
       sticker.element.style.width = size.width + 'px';
       sticker.element.style.height = size.height + 'px';
-      moveTo(sticker, positionInSlot(sticker, sticker.slot));
+      moveTo(sticker, stickerPosition(sticker));
       return;
     }
 
@@ -561,20 +603,30 @@ function layoutStickers() {
 //  Действия игрока
 // ---------------------------------------------------------------
 
+// Что сейчас в руке. Класс на экране нужен таблице стилей: пока игрок
+// держит стикер, приклеенные магниты перестают ловить тапы. Тап по
+// занятому месту значит «клей сюда», а не «сними тот, что уже висит».
+function hold(sticker) {
+  selected = sticker;
+  app.classList.toggle('holding', !!sticker);
+}
+
 function selectSticker(sticker) {
-  if (sticker.placed) return;
+  // Приклеенный стикер не трогаем — кроме магнитов на дверце.
+  // Там снять и переклеить это часть игры, а не ошибка.
+  if (sticker.placed && !free) return;
 
   // Повторный тап по выбранному — снять выбор, иначе игрок в ловушке
   if (selected === sticker) {
     selected.element.classList.remove('selected');
-    selected = null;
+    hold(null);
     log('Стикер отменён:', sticker.type);
     return;
   }
 
   if (selected) selected.element.classList.remove('selected');
 
-  selected = sticker;
+  hold(sticker);
   sticker.element.classList.add('selected');
   playSelect();
   log('Стикер выбран:', sticker.type);
@@ -642,27 +694,32 @@ function groupOf(type) {
 }
 
 function place(sticker, slot) {
-  sticker.element.classList.remove('selected');
-  selected = null;
+  sticker.slot = slot;
+  slot.filled = true;
 
-  // Летим и одновременно уменьшаемся до размера места на полке
+  log('Летит:', sticker.type, '→', slot.id);
+  fly(sticker, slot.id);
+}
+
+// Полёт и посадка, общие для обоих устройств уровня. Куда лететь, стикер
+// к этому моменту уже знает: место на полке или точка на дверце.
+function fly(sticker, where) {
+  sticker.element.classList.remove('selected');
+  hold(null);
+
+  // Летим и одновременно уменьшаемся до размера на сцене
   sticker.element.classList.add('flying', 'placed');
 
   const size = stickerSize(sticker);
   sticker.element.style.width = size.width + 'px';
   sticker.element.style.height = size.height + 'px';
-  moveTo(sticker, positionInSlot(sticker, slot));
-
   sticker.placed = true;
-  sticker.slot = slot;
-  slot.filled = true;
+  moveTo(sticker, stickerPosition(sticker));
 
   // Положенный позже ложится поверх: кусочки арбуза перекрывают друг друга
   // в том порядке, в каком их клали
   placeOrder += 1;
   sticker.element.style.zIndex = placeOrder;
-
-  log('Летит:', sticker.type, '→', slot.id);
 
   // Приземление. Звук играет ИМЕННО ЗДЕСЬ, а не в момент тапа —
   // иначе ухо не связывает щелчок с касанием поверхности.
@@ -670,7 +727,7 @@ function place(sticker, slot) {
     sticker.element.classList.remove('flying');
     sticker.element.classList.add('snap');
     feedbackSnap();
-    log('Приземлился:', sticker.type, '→', slot.id);
+    log('Приземлился:', sticker.type, '→', where);
 
     setTimeout(function () {
       sticker.element.classList.remove('snap');
@@ -680,6 +737,128 @@ function place(sticker, slot) {
 
   // Стикер улетел из полосы — оставшиеся сдвигаются к центру
   layout();
+}
+
+// ---------------------------------------------------------------
+//  Свободная лепка: уровень без мест
+// ---------------------------------------------------------------
+//
+// На дверце нет ни одного заранее посчитанного места: магнит клеится
+// куда угодно. Игра следит ровно за двумя вещами — магнит целиком внутри
+// области и не налезает на соседей. Поэтому промахнуться тут нельзя:
+// если игрок ткнул туда, где тесно, магнит не отказывается лететь,
+// а встаёт в ближайшее свободное место рядом.
+
+const SEARCH_STEP = 6;       // на сколько пикселей отходим от точки тапа за раз
+const SEARCH_ANGLES = 24;    // сколько направлений пробуем на каждом кольце
+
+// Насколько далеко магнит имеет право уехать от пальца, в своих ширинах.
+// Ограничение обязательно: без него магнит из тесного угла улетал через
+// всю дверь в единственную дырку, и это выглядело как сбой, а не как
+// «подвинулся рядом». Не нашлось места рядом — лучше дрогнуть.
+const SEARCH_REACH = 1.2;
+
+// Прямоугольник, заданный долями фона (область, выемка), — в пикселях сцены
+function partRect(part) {
+  const box = backgroundBox();
+
+  return {
+    left: box.left + part.x * box.width,
+    top: box.top + part.y * box.height,
+    right: box.left + (part.x + part.width) * box.width,
+    bottom: box.top + (part.y + part.height) * box.height
+  };
+}
+
+// Прямоугольник магнита, который уже висит на двери
+function spotRect(sticker) {
+  const box = backgroundBox();
+  const size = stickerSize(sticker);
+  const left = box.left + sticker.spot.x * box.width;
+  const top = box.top + sticker.spot.y * box.height;
+
+  return { left: left, top: top, right: left + size.width, bottom: top + size.height };
+}
+
+function overlap(a, b) {
+  return a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
+}
+
+// Магнит целиком внутри области: ткнула у самого края — подвинется внутрь
+function insideArea(left, top, size) {
+  const rect = partRect(level.area);
+
+  return {
+    left: Math.min(Math.max(left, rect.left), rect.right - size.width),
+    top: Math.min(Math.max(top, rect.top), rect.bottom - size.height)
+  };
+}
+
+// Свободно ли тут. Вокруг магнита считается зазор — поэтому соседи встают
+// рядом, а не впритык, и стена магнитов не выглядит слипшейся.
+function spotFree(sticker, left, top, size) {
+  const box = backgroundBox();
+  const gap = (level.gap || 0) * box.width;
+
+  const rect = {
+    left: left - gap, top: top - gap,
+    right: left + size.width + gap, bottom: top + size.height + gap
+  };
+
+  const onHole = (level.holes || []).some(function (hole) {
+    return overlap(rect, partRect(hole));
+  });
+  if (onHole) return false;
+
+  return !stickers.some(function (other) {
+    return other !== sticker && other.spot && overlap(rect, spotRect(other));
+  });
+}
+
+// Ближайшая свободная точка: расходимся кольцами от того места, куда ткнули.
+// Первое найденное и есть ближайшее — кольца растут по очереди.
+function findSpot(sticker, left, top) {
+  const size = stickerSize(sticker);
+  const rings = Math.ceil(size.width * SEARCH_REACH / SEARCH_STEP);
+
+  for (let ring = 0; ring <= rings; ring++) {
+    const radius = ring * SEARCH_STEP;
+    const angles = ring === 0 ? 1 : SEARCH_ANGLES;
+
+    for (let i = 0; i < angles; i++) {
+      const angle = 2 * Math.PI * i / angles;
+      const point = insideArea(
+        left + radius * Math.cos(angle),
+        top + radius * Math.sin(angle),
+        size
+      );
+
+      if (spotFree(sticker, point.left, point.top, size)) return point;
+    }
+  }
+
+  return null;
+}
+
+function dropHere(x, y) {
+  const box = backgroundBox();
+  const size = stickerSize(selected);
+
+  // Магнит встаёт центром туда, куда ткнули пальцем
+  const point = findSpot(selected, x - size.width / 2, y - size.height / 2);
+
+  if (!point) {
+    reject(selected, 'на двери не осталось места');
+    return;
+  }
+
+  selected.spot = {
+    x: (point.left - box.left) / box.width,
+    y: (point.top - box.top) / box.height
+  };
+
+  log('Летит:', selected.type, '→ дверь');
+  fly(selected, 'дверь');
 }
 
 // Уровень закончен, когда разложены все стикеры игрока.
@@ -728,7 +907,10 @@ function feedbackSnap() {
 }
 
 // --- Старт ---
-loadLevel('fridge');
+//
+// Альбома с выбором уровня ещё нет, поэтому второй уровень открывается
+// адресом: ?level=fridge. Одна строка вместо правки кода каждый раз.
+loadLevel(new URLSearchParams(location.search).get('level') || 'door');
 
 window.addEventListener('resize', function () {
   boxCache = null;

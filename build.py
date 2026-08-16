@@ -18,7 +18,7 @@ OUT = os.path.join(BASE, "sticker-perfect.html")
 
 # До какой ширины ужимать картинки. Фон рисуется во весь экран,
 # продукты — мелко, поэтому им хватает меньшего размера.
-WIDTHS = {"fridge": 820, "drawers-front": 700}
+WIDTHS = {"fridge": 820, "door": 820, "drawers-front": 700}
 DEFAULT_WIDTH = 260
 
 

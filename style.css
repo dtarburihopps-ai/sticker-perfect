@@ -196,6 +196,17 @@ html, body {
   pointer-events: none;
 }
 
+/* На дверце иначе: магнит можно снять и переклеить, поэтому тапы он ловит.
+   Но только пока рука пуста — если игрок уже держит стикер, тап по магниту
+   значит «клей сюда», а не «сними этот», и должен пройти насквозь к сцене. */
+#app.free .sticker.placed {
+  pointer-events: auto;
+}
+
+#app.free.holding .sticker.placed {
+  pointer-events: none;
+}
+
 .sticker-body {
   width: 100%;
   height: 100%;

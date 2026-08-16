@@ -14,3 +14,6 @@ sticker-perfect.html
 
 # Линейка для снятия координат — рабочий файл, пересоздаётся
 tools/grid-preview.png
+
+# Превью области дверцы — тоже рабочий файл, пересоздаётся door.py
+tools/door-preview.png
