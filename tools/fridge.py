@@ -7,7 +7,7 @@
 нельзя. Хочешь подвинуть банки или добавить ряд — меняешь константы
 внизу и запускаешь:
 
-    python tools/level1.py
+    python tools/fridge.py
 
 Скрипт перевырезает картинки в images/ и напечатает готовые строки,
 которые остаётся вставить в levels.js.
@@ -18,7 +18,7 @@ from PIL import Image, ImageDraw, ImageFilter
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 BASE = os.path.dirname(HERE)
-REF = os.path.join(BASE, "рефы", "ур 1")
+REF = os.path.join(BASE, "рефы", "ур2")
 IMG = os.path.join(BASE, "images")
 
 # ---------------------------------------------------------------
