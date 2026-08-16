@@ -1,6 +1,9 @@
 # Локальные настройки Claude Code — у каждого свои, в репозиторий не нужны
 .claude/settings.local.json
 
+# Секреты: токен бота и всё в этом духе. В репозиторий не попадает никогда.
+.env
+
 # Мусор Windows и macOS
 Thumbs.db
 desktop.ini
