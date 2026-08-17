@@ -98,7 +98,9 @@ vibrationButton.addEventListener('click', function () {
 let level = null;      // описание уровня из levels.js
 let levelName = '';    // как уровень называется в LEVELS — нужно, чтобы знать следующий
 let free = false;      // уровень без мест: стикер клеится куда угодно
-let ordered = false;   // уровень на порядок: место принимает любой стикер
+let ordered = false;   // уровень на порядок: карандаши от светлого к тёмному
+let grouped = false;   // уровень на группы: пуговицы по форме или по цвету
+let anySlot = false;   // место принимает любой стикер, а не свой продукт
 let trayVisible = TRAY_VISIBLE;   // сколько стикеров показывать в полосе
 let slots = [];        // места на сцене
 let stickers = [];     // все стикеры: и затравки, и те, что кладёт игрок
@@ -128,15 +130,21 @@ function loadLevel(name) {
   level = LEVELS[name];
   levelName = name;
 
-  // Три устройства уровня. В холодильнике места посчитаны заранее и каждое
-  // ждёт свой продукт; на дверце мест нет вообще; в коробке места есть,
-  // но карандаш в них подходит любой — правильным считается только порядок.
+  // Четыре устройства уровня. В холодильнике и автомате места посчитаны
+  // заранее и каждое ждёт свой продукт; на дверце мест нет вообще;
+  // в коробке с карандашами и в ящике с пуговицами места принимают любой
+  // стикер, а правильность проверяется в конце — порядком или признаком.
   //
   // Классом на экране пользуется таблица стилей: там, где стикер можно
   // снять и переложить, приклеенный ловит тапы, а на полке — нет.
   free = level.mode === 'free';
   ordered = level.mode === 'order';
-  app.classList.toggle('movable', free || ordered);
+  grouped = level.mode === 'groups';
+
+  // В этих двух устройствах место принимает любой стикер, а правильность
+  // проверяется только в конце: порядок в ряду или признак в отсеке.
+  anySlot = ordered || grouped;
+  app.classList.toggle('movable', free || anySlot);
 
   // Полоса внизу подстраивается под уровень: карандаши длинные и узкие,
   // при обычной высоте восемь штук ужимаются в ниточки, в которые не попасть.
@@ -214,7 +222,7 @@ scene.addEventListener('click', function (event) {
 
   // В коробке с карандашами место принимает любой стикер, поэтому
   // не спрашиваем «есть ли место под этот тип», а берём ближайшее
-  const spot = slotAt(x, y, ordered ? null : selected.type);
+  const spot = slotAt(x, y, anySlot ? null : selected.type);
   if (spot) {
     tapSlot(spot);
     return;
@@ -274,7 +282,7 @@ function slotAt(x, y, type) {
     // В коробке с карандашами наоборот: места не накладываются, стоят в ряд,
     // а тап по занятому — это обмен, обычное действие. Со штрафом игрок
     // целился бы в один карандаш, а менялся бы соседний свободный.
-    const penalty = (slot.filled && !ordered) ? 1e9 : 0;
+    const penalty = (slot.filled && !anySlot) ? 1e9 : 0;
 
     if (distance + penalty < bestDistance) {
       bestDistance = distance + penalty;
@@ -646,7 +654,7 @@ function hold(sticker) {
 function selectSticker(sticker) {
   // Приклеенный стикер не трогаем — кроме магнитов на дверце и карандашей
   // в коробке. Там снять и переложить это часть игры, а не ошибка.
-  if (sticker.placed && !free && !ordered) return;
+  if (sticker.placed && !free && !anySlot) return;
 
   // Затравки стоят намертво: они показывают, где светлое, а где тёмное,
   // и если их можно утащить, подсказка перестаёт быть подсказкой
@@ -681,7 +689,7 @@ function whyNot(sticker, slot) {
   // В коробке с карандашами запретов нет вообще: любой карандаш
   // встаёт в любое место. Правильным считается только порядок,
   // и проверяет его конец уровня, а не это место.
-  if (ordered) return null;
+  if (anySlot) return null;
 
   if (slot.filled) return 'место занято';
 
@@ -710,7 +718,7 @@ function tapSlot(slot) {
   // Занятое место в коробке — не отказ, а обмен: сортировка вся про
   // перестановки, и без обмена каждая правка стоила бы трёх тапов
   // вместо двух.
-  if (ordered && slot.filled) {
+  if (anySlot && slot.filled) {
     swap(selected, slot);
     return;
   }
@@ -975,6 +983,11 @@ function checkFinished() {
     return;
   }
 
+  if (grouped && !inGroups()) {
+    log('Всё в ящике, но отсеки собраны не по признаку');
+    return;
+  }
+
   finished = true;
   log('Уровень собран');
 
@@ -997,6 +1010,30 @@ function checkFinished() {
       }, 20);
     }
   }, level.mascotDelay || MASCOT_DELAY);
+}
+
+// Пуговицы разложены верно, когда в КАЖДОМ отсеке четыре штуки с общим
+// признаком: либо все одной формы, либо все одного цвета. Какой из двух
+// способов выбрать, решает игрок, и оба правильные.
+//
+// Смешать способы нельзя чисто арифметически: если один отсек занять
+// кругами всех цветов, а другой квадратами всех цветов, то на «жёлтый
+// отсек» останется всего два жёлтых. Поэтому отдельной проверки
+// «везде один и тот же признак» не нужно.
+function inGroups() {
+  const cells = {};
+  slots.forEach(function (slot) {
+    (cells[slot.group] = cells[slot.group] || []).push(stickerIn(slot));
+  });
+
+  return Object.keys(cells).every(function (name) {
+    const inside = cells[name];
+    if (inside.some(function (s) { return !s; })) return false;
+
+    const first = inside[0].kind;
+    return inside.every(function (s) { return s.kind.shape === first.shape; })
+        || inside.every(function (s) { return s.kind.colour === first.colour; });
+  });
 }
 
 // Карандаши стоят по порядку: слева направо оттенки идут от светлого

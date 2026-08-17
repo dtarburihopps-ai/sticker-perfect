@@ -13,7 +13,7 @@
 //   group   — в одной группе не уживаются разные продукты
 //   filled  — здесь стикер стоит с самого начала (затравка)
 //
-// Уровни бывают трёх устройств.
+// Уровни бывают четырёх устройств.
 //
 //   мест нет (mode: 'free') — магнит клеится куда угодно внутри area,
 //   кроме выемок holes. Тогда вместо slots уровень задаёт area, holes,
@@ -23,6 +23,9 @@
 //   место, но правильным считается только порядок по rank. Занятое место
 //   не отказ, а обмен: тот, что лежал, уезжает на место пришедшего.
 //
+//   места есть, признак общий (mode: 'groups') — пуговица встаёт в любое
+//   место, а правильно, когда в каждом отсеке общая форма или общий цвет.
+//
 //   места посчитаны (по умолчанию) — стикер идёт только в свой slot.
 //
 // ЧИСЛА НЕ ПРАВИТЬ РУКАМИ. Они посчитаны из размеров сцены:
@@ -31,6 +34,7 @@
 //     python tools/door.py       дверца
 //     python tools/vending.py    вендинговый автомат
 //     python tools/pencils.py    карандаши
+//     python tools/buttons.py    пуговицы
 //
 // Скрипт перевырезает картинки и печатает готовые строки для этого файла.
 // Хочешь подвинуть банки или добавить ряд — меняй константы там.
@@ -370,6 +374,77 @@ const LEVELS = {
     tray: [
       'pencil-5', 'pencil-2', 'pencil-8', 'pencil-3',
       'pencil-7', 'pencil-4', 'pencil-9', 'pencil-6'
+    ]
+  },
+
+  // --- Уровень 5: пуговицы ---
+  //
+  // Уровень на два признака: 4 формы на 4 цвета, все 16 сочетаний.
+  // Разложить можно ДВУМЯ правильными способами — по форме или по цвету, —
+  // и оба засчитываются. Смешать их нельзя: если один отсек занять кругами
+  // всех цветов, а другой квадратами, то на «жёлтый отсек» останется всего
+  // два жёлтых. Игра сама держит игрока в одном принципе, без единого слова.
+  //
+  // Игра молчит до верной раскладки, как в карандашах: кот не пришёл —
+  // значит ещё не то. Пуговицу можно вынуть и переложить.
+  buttons: {
+    mode: 'groups',
+    background: 'images/buttons-box.png',
+    wall: '#EAC08F',
+
+    trayVisible: 6,
+
+    // shape и colour — те самые два признака. Третьего у пуговиц нет
+    // нарочно: размер и число дырочек у всех одинаковые, иначе игрок
+    // начал бы сортировать по ним.
+    stickers: {
+      'circle-yellow': { image: 'images/button-circle-yellow.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'yellow' },
+      'circle-coral': { image: 'images/button-circle-coral.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'coral' },
+      'circle-violet': { image: 'images/button-circle-violet.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'violet' },
+      'circle-graphite': { image: 'images/button-circle-graphite.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'graphite' },
+      'flower-yellow': { image: 'images/button-flower-yellow.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'yellow' },
+      'flower-coral': { image: 'images/button-flower-coral.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'coral' },
+      'flower-violet': { image: 'images/button-flower-violet.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'violet' },
+      'flower-graphite': { image: 'images/button-flower-graphite.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'graphite' },
+      'square-yellow': { image: 'images/button-square-yellow.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'yellow' },
+      'square-coral': { image: 'images/button-square-coral.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'coral' },
+      'square-violet': { image: 'images/button-square-violet.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'violet' },
+      'square-graphite': { image: 'images/button-square-graphite.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'graphite' },
+      'heart-yellow': { image: 'images/button-heart-yellow.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'yellow' },
+      'heart-coral': { image: 'images/button-heart-coral.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'coral' },
+      'heart-violet': { image: 'images/button-heart-violet.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'violet' },
+      'heart-graphite': { image: 'images/button-heart-graphite.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'graphite' }
+    },
+
+    // Размер места: пуговицы все одного габарита, поэтому он один на всех
+    slotSize: { width: 0.1524, height: 0.0914 },
+
+    // Четыре отсека по четыре места. group — это отсек: он получает признак
+    // от того, что в него положили, и заранее ни за кем не закреплён.
+    slots: [
+      { id: 'cell1-1', group: 'cell1', x: 0.1359, bottom: 0.3569 },
+      { id: 'cell1-2', group: 'cell1', x: 0.3172, bottom: 0.3569 },
+      { id: 'cell1-3', group: 'cell1', x: 0.1359, bottom: 0.4665 },
+      { id: 'cell1-4', group: 'cell1', x: 0.3172, bottom: 0.4665 },
+      { id: 'cell2-1', group: 'cell2', x: 0.5301, bottom: 0.3569 },
+      { id: 'cell2-2', group: 'cell2', x: 0.7129, bottom: 0.3569 },
+      { id: 'cell2-3', group: 'cell2', x: 0.5301, bottom: 0.4665 },
+      { id: 'cell2-4', group: 'cell2', x: 0.7129, bottom: 0.4665 },
+      { id: 'cell3-1', group: 'cell3', x: 0.1359, bottom: 0.6070 },
+      { id: 'cell3-2', group: 'cell3', x: 0.3172, bottom: 0.6070 },
+      { id: 'cell3-3', group: 'cell3', x: 0.1359, bottom: 0.7166 },
+      { id: 'cell3-4', group: 'cell3', x: 0.3172, bottom: 0.7166 },
+      { id: 'cell4-1', group: 'cell4', x: 0.5301, bottom: 0.6070 },
+      { id: 'cell4-2', group: 'cell4', x: 0.7129, bottom: 0.6070 },
+      { id: 'cell4-3', group: 'cell4', x: 0.5301, bottom: 0.7166 },
+      { id: 'cell4-4', group: 'cell4', x: 0.7129, bottom: 0.7166 }
+    ],
+
+    tray: [
+      'flower-coral', 'heart-yellow', 'circle-graphite', 'square-coral',
+      'circle-yellow', 'heart-violet', 'flower-graphite', 'square-violet',
+      'circle-violet', 'heart-coral', 'flower-yellow', 'square-graphite',
+      'flower-violet', 'circle-coral', 'heart-graphite', 'square-yellow'
     ]
   }
 };

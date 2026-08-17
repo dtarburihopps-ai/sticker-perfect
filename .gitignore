@@ -30,3 +30,7 @@ tools/pencils-preview.png
 
 # Превью автомата — рабочий файл, пересоздаётся vending.py
 tools/vending-preview.png
+
+# Превью ящика с пуговицами — рабочие файлы, пересоздаются buttons.py
+tools/buttons-preview.png
+tools/buttons-preview-colour.png
