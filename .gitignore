@@ -27,3 +27,6 @@ tools/door-preview.png
 
 # Превью коробки с карандашами — рабочий файл, пересоздаётся pencils.py
 tools/pencils-preview.png
+
+# Превью автомата — рабочий файл, пересоздаётся vending.py
+tools/vending-preview.png

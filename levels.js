@@ -29,6 +29,7 @@
 //
 //     python tools/fridge.py     холодильник
 //     python tools/door.py       дверца
+//     python tools/vending.py    вендинговый автомат
 //     python tools/pencils.py    карандаши
 //
 // Скрипт перевырезает картинки и печатает готовые строки для этого файла.
@@ -205,6 +206,105 @@ const LEVELS = {
       { type: 'pickle', image: 'images/pickle-5.png' },
       'cola', 'orange', 'pepper',
       { type: 'pickle', image: 'images/pickle-6.png' }
+    ]
+  },
+
+  // --- Уровень 3: вендинговый автомат ---
+  //
+  // Устроен как холодильник: у каждого места свой товар. Но подсказок в игре
+  // нет ни одной — ни затравок, ни надписей. Игрок понимает, куда что идёт,
+  // только по размеру: свой товар заполняет ячейку целиком, чужой в неё
+  // не влезает. Поэтому полки нарочно разной высоты.
+  //
+  // Однотипный товар взаимозаменяем: любая бутылка идёт в любое свободное
+  // место своей полки. Иначе игрок угадывал бы, какая именно левее.
+  vending: {
+    background: 'images/vending.png',
+    wall: '#E9DDC8',
+
+    // Товара 27 штук, в полосе видно шесть: по пять он листался бы шесть раз
+    trayVisible: 6,
+
+    // Ширина = ширина ячейки, высота = просвет полки. Картинка тянется
+    // на разницу от -7% до +8%: щели в ряду видно сразу, а проценты — нет.
+    // Картинки у видов нет: она приходит вместе с каждым предметом в полосе,
+    // потому что дизайны внутри вида разные, а место принимает любой.
+    stickers: {
+      bar:    { width: 0.0784, height: 0.1161 },
+      can:    { width: 0.0915, height: 0.1044 },
+      chips:  { width: 0.1372, height: 0.1081 },
+      pouch:  { width: 0.1098, height: 0.0846 },
+      bottle: { width: 0.1098, height: 0.1637 }
+    },
+
+    // Стекло лежит НАД товаром — тот же приём, что с передней стенкой
+    // ящиков в холодильнике: товар выглядит стоящим внутри автомата,
+    // а не наклеенным на стекло снаружи.
+    overlays: [
+      { image: 'images/vending-glass.png', x: 0.1555, y: 0.0988, width: 0.5489 }
+    ],
+
+    slots: [
+      { id: 'bar-1', sticker: 'bar', x: 0.1555, bottom: 0.2205 },
+      { id: 'bar-2', sticker: 'bar', x: 0.2339, bottom: 0.2205 },
+      { id: 'bar-3', sticker: 'bar', x: 0.3123, bottom: 0.2205 },
+      { id: 'bar-4', sticker: 'bar', x: 0.3908, bottom: 0.2205 },
+      { id: 'bar-5', sticker: 'bar', x: 0.4692, bottom: 0.2205 },
+      { id: 'bar-6', sticker: 'bar', x: 0.5476, bottom: 0.2205 },
+      { id: 'bar-7', sticker: 'bar', x: 0.6260, bottom: 0.2205 },
+      { id: 'can-1', sticker: 'can', x: 0.1555, bottom: 0.3372 },
+      { id: 'can-2', sticker: 'can', x: 0.2470, bottom: 0.3372 },
+      { id: 'can-3', sticker: 'can', x: 0.3385, bottom: 0.3372 },
+      { id: 'can-4', sticker: 'can', x: 0.4300, bottom: 0.3372 },
+      { id: 'can-5', sticker: 'can', x: 0.5215, bottom: 0.3372 },
+      { id: 'can-6', sticker: 'can', x: 0.6129, bottom: 0.3372 },
+      { id: 'chips-1', sticker: 'chips', x: 0.1555, bottom: 0.4602 },
+      { id: 'chips-2', sticker: 'chips', x: 0.2927, bottom: 0.4602 },
+      { id: 'chips-3', sticker: 'chips', x: 0.4300, bottom: 0.4602 },
+      { id: 'chips-4', sticker: 'chips', x: 0.5672, bottom: 0.4602 },
+      { id: 'pouch-1', sticker: 'pouch', x: 0.1555, bottom: 0.5584 },
+      { id: 'pouch-2', sticker: 'pouch', x: 0.2653, bottom: 0.5584 },
+      { id: 'pouch-3', sticker: 'pouch', x: 0.3751, bottom: 0.5584 },
+      { id: 'pouch-4', sticker: 'pouch', x: 0.4849, bottom: 0.5584 },
+      { id: 'pouch-5', sticker: 'pouch', x: 0.5946, bottom: 0.5584 },
+      { id: 'bottle-1', sticker: 'bottle', x: 0.1555, bottom: 0.7381 },
+      { id: 'bottle-2', sticker: 'bottle', x: 0.2653, bottom: 0.7381 },
+      { id: 'bottle-3', sticker: 'bottle', x: 0.3751, bottom: 0.7381 },
+      { id: 'bottle-4', sticker: 'bottle', x: 0.4849, bottom: 0.7381 },
+      { id: 'bottle-5', sticker: 'bottle', x: 0.5946, bottom: 0.7381 }
+    ],
+
+    // В полосе товар вперемешку и по кругу видов: игрок листает и видит
+    // выбор, а не семь батончиков подряд. Дизайнов местами меньше, чем мест,
+    // поэтому часть повторяется — в живом автомате так и есть.
+    tray: [
+      { type: 'bar', image: 'images/vend-bar-1.png' },
+      { type: 'can', image: 'images/vend-can-1.png' },
+      { type: 'chips', image: 'images/vend-chips-1.png' },
+      { type: 'pouch', image: 'images/vend-pouch-1.png' },
+      { type: 'bottle', image: 'images/vend-bottle-1.png' },
+      { type: 'bar', image: 'images/vend-bar-2.png' },
+      { type: 'can', image: 'images/vend-can-2.png' },
+      { type: 'chips', image: 'images/vend-chips-2.png' },
+      { type: 'pouch', image: 'images/vend-pouch-2.png' },
+      { type: 'bottle', image: 'images/vend-bottle-2.png' },
+      { type: 'bar', image: 'images/vend-bar-3.png' },
+      { type: 'can', image: 'images/vend-can-3.png' },
+      { type: 'chips', image: 'images/vend-chips-3.png' },
+      { type: 'pouch', image: 'images/vend-pouch-3.png' },
+      { type: 'bottle', image: 'images/vend-bottle-3.png' },
+      { type: 'bar', image: 'images/vend-bar-4.png' },
+      { type: 'can', image: 'images/vend-can-4.png' },
+      { type: 'chips', image: 'images/vend-chips-1.png' },
+      { type: 'pouch', image: 'images/vend-pouch-4.png' },
+      { type: 'bottle', image: 'images/vend-bottle-4.png' },
+      { type: 'bar', image: 'images/vend-bar-5.png' },
+      { type: 'can', image: 'images/vend-can-1.png' },
+      { type: 'pouch', image: 'images/vend-pouch-1.png' },
+      { type: 'bottle', image: 'images/vend-bottle-5.png' },
+      { type: 'bar', image: 'images/vend-bar-6.png' },
+      { type: 'can', image: 'images/vend-can-2.png' },
+      { type: 'bar', image: 'images/vend-bar-7.png' }
     ]
   },
 
