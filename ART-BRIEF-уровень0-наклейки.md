@@ -32,7 +32,7 @@
 
 ## Обязательные требования
 
-- **Вид строго сверху, без перспективы** — наклейка лежит на бумаге плашмя.
+- **Вид строго сверху, плашмя.** Это главная беда прошлых наклеек: предмет нарисован чуть развёрнутым, будто смотришь на него сбоку-сверху, и наклейка перестаёт быть плоской. Нужен ровный вид сверху: у кружки видно круглое отверстие целиком, а не овал; у стопки книг не видно торцов; у горшка не видно внутренней стенки. Объём — только мягкой тенью внутри рисунка, без разворота предмета.
 - **Обводка замкнутая и ровная**: по ней игра строит контур места, разрывы и рваные края испортят подсказку.
 - Никаких мелких висящих деталей за пределами обводки — они превратятся в мусор на контуре.
 - Один предмет на наклейку, без композиций из нескольких.
@@ -41,8 +41,10 @@
 
 ```
 A single die-cut vinyl sticker of a [camera / stack of books / mug of
-cocoa / potted plant / ball of yarn], seen strictly from above, flat,
-no perspective. Square image 600x600, transparent background.
+cocoa / potted plant / ball of yarn], drawn as a completely FLAT
+top-down icon: the object is seen from directly above, not tilted, not
+rotated, no side surfaces visible, no three-quarter view.
+Square image 600x600, transparent background.
 
 The sticker has a clean white die-cut border of even width around the
 whole shape, about 22 pixels wide. The object is centered with at least
@@ -60,5 +62,6 @@ NO drop shadow, NO background, NO text, no letters, no numbers.
 - [ ] Поля не меньше 6 % со всех сторон
 - [ ] Белая обводка ровная и замкнутая, 20–24 px
 - [ ] Тени под наклейкой нет
+- [ ] Вид строго сверху: предмет не развёрнут, боковых стенок не видно
 - [ ] Силуэты пяти наклеек заметно разные
 - [ ] Текста нет нигде
