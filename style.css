@@ -495,9 +495,16 @@ body.in-menu #app {
   display: block;
 }
 
+/* Кот лежит посреди свободного места: отступы auto сверху и снизу сами
+   делят его поровну, поэтому кнопка остаётся внизу страницы */
+#mascot-menu {
+  width: 100%;
+  margin: auto 0;
+  display: block;
+}
+
 #play {
   width: 100%;
-  margin-top: auto;                /* кнопка живёт внизу страницы */
   padding: 12px 0;
   background: #F3C6D2;
   color: #7A3A4C;
