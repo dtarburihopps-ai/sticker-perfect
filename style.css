@@ -18,6 +18,14 @@
 
   --next-bg:      #7FBF4D;  /* зелень кнопки «дальше» */
   --next-ink:     #FFFFFF;  /* сама стрелка */
+
+  /* Меню-альбом. Пока страницы нарисованы этими цветами; когда придёт
+     картинка тетради, фон заменит их, а цвета останутся для кнопок */
+  --paper:        #FBF7F1;  /* бумага страницы */
+  --ink:          #5A4A3C;  /* надписи на бумаге */
+  --table:        #E7DED2;  /* стол вокруг тетради */
+  --frame:        #CBBFAE;  /* рамка под наклейку */
+  --locked:       #D8CFC6;  /* закрытый уровень */
 }
 
 /* --- Мобильные ловушки: без этого игра ведёт себя плохо на телефоне --- */
@@ -293,43 +301,69 @@ html, body {
   transform: translate(-50%, 28%);
 }
 
-/* --- Стрелка «дальше»: появляется вместе с котом, когда уровень собран ---
-   Держится точно в середине экрана и с котом никак не связана: кот ещё
-   поменяется и будет вылезать с разных сторон, а кнопка останется тут же. */
-#next-level {
+/* --- Конец уровня: «в меню» и «дальше» ---
+   Панель держится точно в середине экрана и с котом никак не связана:
+   кот ещё поменяется и будет вылезать с разных сторон, а кнопки
+   останутся тут же. */
+#finish {
   position: absolute;
   left: 50%;
   top: 44%;                       /* чуть выше середины экрана */
-  width: 120px;
-  height: 120px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  z-index: 5;                     /* выше кота */
+}
+
+/* display: flex сильнее, чем hidden — без этой строки панель висела бы
+   на экране с самого начала уровня */
+#finish[hidden],
+#next-level[hidden] {
+  display: none;
+}
+
+#finish button {
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--next-bg);
-  color: var(--next-ink);
   border: 5px solid #F7F4EE;      /* светлый ободок: кнопка читается на любом фоне */
   cursor: pointer;
-  z-index: 5;                     /* выше кота */
 
   /* Скрытое состояние. hidden в разметке убирается сразу, иначе
      не проиграется появление — прячем именно прозрачностью */
   opacity: 0;
-  transform: translate(-50%, -50%) scale(0.7);
+  transform: scale(0.7);
   pointer-events: none;
   transition:
     opacity   var(--next-time) ease-out,
     transform var(--next-time) cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-#next-level.show {
+/* «В меню» — тише и меньше: главный шаг здесь всё-таки «дальше» */
+#to-menu {
+  width: 84px;
+  height: 84px;
+  background: var(--paper);
+  color: var(--ink);
+}
+
+#next-level {
+  width: 120px;
+  height: 120px;
+  background: var(--next-bg);
+  color: var(--next-ink);
+}
+
+#finish.show button {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
+  transform: scale(1);
   pointer-events: auto;
 }
 
-#next-level:active {
-  transform: translate(-50%, -50%) scale(0.92);
+#finish.show button:active {
+  transform: scale(0.92);
   transition-duration: 80ms;
 }
 
@@ -368,4 +402,186 @@ html, body {
   height: 1.6px;
   background: currentColor;
   transform: rotate(-45deg);
+}
+
+/* --- Стрелка «назад в меню» на уровне ---
+   Стоит в левом верхнем углу, зеркально кнопке вибрации, и такая же
+   негромкая: уходить с уровня — редкое действие */
+#back-to-menu {
+  position: absolute;
+  top: calc(10px + env(safe-area-inset-top));
+  left: 10px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--icon);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: opacity 120ms ease-out;
+  z-index: 3;
+}
+
+#back-to-menu:active {
+  opacity: 1;
+}
+
+/* --- Меню: раскрытый альбом ---
+   Пока страницы нарисованы стилями. Когда придёт картинка тетради,
+   она встанет фоном на #album, а разметка внутри останется той же:
+   доли и отступы уже считаются от разворота, а не от экрана. */
+body.in-menu #app {
+  display: none;                   /* в меню сцены уровня просто нет */
+}
+
+#menu {
+  position: fixed;
+  inset: 0;
+  background: var(--table);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+}
+
+#menu[hidden] {
+  display: none;
+}
+
+/* Разворот держит пропорции картинки тетради (900 × 1400) — на любом
+   экране страницы остаются страницами, а не растягиваются */
+#album {
+  width: 100%;
+  max-width: 520px;
+  aspect-ratio: 900 / 1400;
+  max-height: 100%;
+  display: flex;
+  background: var(--paper);
+  border-radius: 10px;
+  box-shadow: 0 6px 18px rgba(90, 74, 60, 0.18);
+  overflow: hidden;
+}
+
+.page {
+  flex: 1;
+  min-width: 0;                    /* иначе широкая наклейка распирает колонку */
+  padding: 5% 4%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: var(--ink);
+}
+
+/* Сгиб. На месте пружины с картинки — пока просто линия */
+.page.right {
+  border-left: 2px solid var(--frame);
+}
+
+.page h1 {
+  font-size: 20px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.25;
+}
+
+.page h2 {
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+
+/* Кот сидит на левой странице и ничего не делает — он тут за настроение */
+.menu-cat {
+  width: 70%;
+  margin: 6% 0;
+  display: block;
+}
+
+#play {
+  width: 100%;
+  padding: 12px 0;
+  background: #F3C6D2;
+  color: #7A3A4C;
+  border: 1px solid #D79AAB;
+  border-radius: 8px;
+  font-size: 17px;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+#play:active {
+  transform: scale(0.97);
+}
+
+/* --- Наклейки-уровни --- */
+#level-grid {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+/* Рамка под наклейку — тонкая двойная линия, как в альбомах нулевых.
+   Открытый уровень показывает свою сцену, закрытый — замок. */
+.level-card {
+  aspect-ratio: 1 / 1.3;
+  padding: 3px;
+  background: var(--paper);
+  border: 1px double var(--frame);
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: #6D6055;
+  cursor: pointer;
+}
+
+.level-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;               /* фон уровня обрезается по рамке */
+  border-radius: 2px;
+  display: block;
+}
+
+.level-card:active img {
+  transform: scale(0.96);
+}
+
+.level-card.locked {
+  background: var(--locked);
+  cursor: default;
+}
+
+/* --- Листание страниц альбома --- */
+#menu-pages {
+  margin-top: auto;                /* прижимаем к низу страницы */
+  padding-top: 10px;
+  display: flex;
+  gap: 14px;
+}
+
+#menu-pages button {
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  color: var(--ink);
+  opacity: 0.5;
+  cursor: pointer;
+}
+
+#menu-pages button[hidden] {
+  display: none;
+}
+
+#menu-pages button:active {
+  opacity: 1;
 }

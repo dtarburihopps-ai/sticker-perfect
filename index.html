@@ -9,6 +9,39 @@
 </head>
 <body>
 
+  <!-- Меню: раскрытый альбом. Слева «Играть», справа наклейки-уровни.
+       Пока страницы альбома нарисованы стилями; когда придёт картинка
+       от Себастиана, она встанет фоном на #album -->
+  <div id="menu" hidden>
+    <div id="album">
+
+      <div class="page left">
+        <h1>Sticker&nbsp;Perfect</h1>
+        <img class="menu-cat" src="images/cat.png" alt="">
+        <button id="play">Играть</button>
+      </div>
+
+      <div class="page right">
+        <h2>Уровни</h2>
+        <div id="level-grid"></div>
+
+        <div id="menu-pages">
+          <button id="menu-prev" aria-label="Предыдущая страница" hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 5 L8 12 L15 19"></path>
+            </svg>
+          </button>
+          <button id="menu-next" aria-label="Следующая страница" hidden>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 5 L16 12 L9 19"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
   <div id="app">
 
     <div id="scene">
@@ -17,6 +50,14 @@
       <!-- Обстановка уровня: вещи, которые лежат в холодильнике с самого
            начала и не двигаются. Стикеры кладутся поверх них -->
       <div id="decor"></div>
+
+      <!-- Стрелка «назад в меню». Уйти можно в любой момент; собранное
+           на уровне при этом не сохраняется — вернёшься к чистой сцене -->
+      <button id="back-to-menu" aria-label="В меню">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 12 H6 M11 7 L6 12 L11 17"></path>
+        </svg>
+      </button>
 
       <button id="vibration-toggle" aria-label="Выключить вибрацию">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
@@ -52,19 +93,32 @@
     <!-- Кот выглядывает снизу, когда уровень собран. Это и есть финал -->
     <img id="mascot" src="images/cat.png" alt="">
 
-    <!-- Стрелка «дальше». Стоит ровно в середине экрана и ни к чему не
-         привязана: кот со временем будет меняться и вылезать с разных
-         сторон, а кнопка от этого не поедет -->
-    <button id="next-level" aria-label="Следующий уровень" hidden>
-      <svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M5 12 H18 M13 7 L18 12 L13 17"></path>
-      </svg>
-    </button>
+    <!-- Конец уровня: в меню и дальше. Панель стоит ровно в середине
+         экрана и ни к чему не привязана: кот со временем будет меняться
+         и вылезать с разных сторон, а кнопки от этого не поедут.
+         Стрелка справа — по ходу движения вперёд -->
+    <div id="finish" hidden>
+      <button id="to-menu" aria-label="В меню">
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 5.5a2 2 0 0 1 2-2h5v17H6a2 2 0 0 1-2-2z"></path>
+          <path d="M20 5.5a2 2 0 0 0-2-2h-5v17h5a2 2 0 0 0 2-2z"></path>
+        </svg>
+      </button>
+
+      <button id="next-level" aria-label="Следующий уровень">
+        <svg viewBox="0 0 24 24" width="54" height="54" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M5 12 H18 M13 7 L18 12 L13 17"></path>
+        </svg>
+      </button>
+    </div>
 
   </div>
 
   <script src="sound.js"></script>
   <script src="levels.js"></script>
   <script src="game.js"></script>
+  <!-- Меню идёт последним: оно и решает, что показать при запуске —
+       альбом или уровень -->
+  <script src="menu.js"></script>
 </body>
 </html>

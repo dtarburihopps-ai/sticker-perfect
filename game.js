@@ -77,6 +77,18 @@ const nextButton = document.getElementById('tray-next');
 const vibrationButton = document.getElementById('vibration-toggle');
 const mascot = document.getElementById('mascot');
 const nextLevelButton = document.getElementById('next-level');
+const finishPanel = document.getElementById('finish');
+const toMenuButton = document.getElementById('to-menu');
+const backButton = document.getElementById('back-to-menu');
+
+// Выход в меню — это адрес без ?level=. Страница перезагружается,
+// и уровень начинается заново, если игрок вернётся в него снова.
+function goToMenu() {
+  location.href = location.pathname;
+}
+
+backButton.addEventListener('click', goToMenu);
+toMenuButton.addEventListener('click', goToMenu);
 
 // --- Вибрация ---
 let vibrationOn = true;
@@ -991,24 +1003,29 @@ function checkFinished() {
   finished = true;
   log('Уровень собран');
 
+  // Следующий уровень открывается сразу, ещё до прихода кота:
+  // игрок может выйти в меню кнопкой, и уровень должен его там ждать
+  unlockAfter(levelName);
+
   // Небольшая пауза: пусть последний стикер успеет улечься,
   // а игрок — увидеть готовую картинку
   setTimeout(function () {
     mascot.classList.add('show');
     log('Кот пришёл');
 
-    // Стрелка появляется в ту же секунду, что и кот.
-    // Если следующего уровня нет — стрелке некуда вести, и её просто нет.
-    if (nextLevelName()) {
-      nextLevelButton.hidden = false;
-      // hidden сняли — даём браузеру мгновение, иначе он посчитает, что
-      // кнопка всегда была видимой, и появление не проиграется.
-      // setTimeout, а не requestAnimationFrame: в фоновой вкладке кадров
-      // нет, и кнопка осталась бы невидимой навсегда.
-      setTimeout(function () {
-        nextLevelButton.classList.add('show');
-      }, 20);
-    }
+    // Кнопки появляются в ту же секунду, что и кот.
+    // Если следующего уровня нет — стрелке некуда вести, и остаётся
+    // только «в меню».
+    nextLevelButton.hidden = !nextLevelName();
+
+    finishPanel.hidden = false;
+    // hidden сняли — даём браузеру мгновение, иначе он посчитает, что
+    // кнопки всегда были видимыми, и появление не проиграется.
+    // setTimeout, а не requestAnimationFrame: в фоновой вкладке кадров
+    // нет, и кнопки остались бы невидимыми навсегда.
+    setTimeout(function () {
+      finishPanel.classList.add('show');
+    }, 20);
   }, level.mascotDelay || MASCOT_DELAY);
 }
 
@@ -1097,22 +1114,9 @@ function feedbackSnap() {
   }
 }
 
-// --- Старт ---
-//
-// Альбома с выбором уровня ещё нет, поэтому уровень открывается адресом:
-// ?level=fridge. Одна строка вместо правки кода каждый раз.
-//
-// Если такого уровня нет — открываем первый, а не падаем. Ссылка могла
-// остаться со старой версии или уехать в телеграм раньше, чем сам уровень:
-// пустой чёрный экран в этом случае выглядит как сломанная игра.
-function startLevel() {
-  const asked = new URLSearchParams(location.search).get('level');
-  if (asked && !LEVELS[asked]) log('Уровня', asked, 'здесь нет — открываем первый');
-
-  return (asked && LEVELS[asked]) ? asked : Object.keys(LEVELS)[0];
-}
-
-loadLevel(startLevel());
+// Что открыть при запуске — меню или уровень — решает menu.js:
+// он знает про прогресс. Уровень по-прежнему можно открыть адресом,
+// ?level=fridge, это удобно при настройке.
 
 window.addEventListener('resize', function () {
   boxCache = null;
