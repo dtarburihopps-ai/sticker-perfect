@@ -23,7 +23,7 @@
      картинка тетради, фон заменит их, а цвета останутся для кнопок */
   --paper:        #FBF7F1;  /* бумага страницы */
   --ink:          #5A4A3C;  /* надписи на бумаге */
-  --table:        #E7DED2;  /* стол вокруг тетради */
+  --table:        #AB8053;  /* стол вокруг тетради, пипеткой с картинки */
   --frame:        #CBBFAE;  /* рамка под наклейку */
   --locked:       #D8CFC6;  /* закрытый уровень */
 }
@@ -430,9 +430,16 @@ html, body {
 }
 
 /* --- Меню: раскрытый альбом ---
-   Пока страницы нарисованы стилями. Когда придёт картинка тетради,
-   она встанет фоном на #album, а разметка внутри останется той же:
-   доли и отступы уже считаются от разворота, а не от экрана. */
+   Фон — фотография тетради. Всё остальное сажается на неё по долям,
+   замеренным прямо по картинке:
+
+     страницы по горизонтали   левая  0.0586 … 0.4742
+                               правая 0.5258 … 0.9423
+     страницы по вертикали     0.1809 … 0.8155
+
+   Поэтому кнопка и наклейки лежат на бумаге, а не на пружине и не на
+   столе, на любом экране. Поменяется картинка — поменяются эти числа,
+   и больше ничего. */
 body.in-menu #app {
   display: none;                   /* в меню сцены уровня просто нет */
 }
@@ -440,68 +447,57 @@ body.in-menu #app {
 #menu {
   position: fixed;
   inset: 0;
-  background: var(--table);
+  background: var(--table);        /* стол продолжается за краями картинки */
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 10px;
 }
 
 #menu[hidden] {
   display: none;
 }
 
-/* Разворот держит пропорции картинки тетради (900 × 1400) — на любом
-   экране страницы остаются страницами, а не растягиваются */
+/* Разворот держит пропорции картинки: тетрадь во всю ширину экрана,
+   сверху и снизу остаётся стол. Крупнее нельзя — срежутся края страниц */
 #album {
+  position: relative;
   width: 100%;
   max-width: 520px;
-  aspect-ratio: 900 / 1400;
-  max-height: 100%;
-  display: flex;
-  background: var(--paper);
-  border-radius: 10px;
-  box-shadow: 0 6px 18px rgba(90, 74, 60, 0.18);
-  overflow: hidden;
+  aspect-ratio: 900 / 1399;
+  background: url('images/album.jpg') center / 100% 100% no-repeat;
 }
 
+/* Страница — прямоугольник бумаги на картинке */
 .page {
-  flex: 1;
-  min-width: 0;                    /* иначе широкая наклейка распирает колонку */
-  padding: 5% 4%;
+  position: absolute;
+  top: 18.09%;
+  bottom: 18.45%;
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding: 3.5% 3%;
   color: var(--ink);
 }
 
-/* Сгиб. На месте пружины с картинки — пока просто линия */
+.page.left {
+  left: 5.86%;
+  right: 52.58%;
+}
+
 .page.right {
-  border-left: 2px solid var(--frame);
+  left: 52.58%;
+  right: 5.77%;
 }
 
-.page h1 {
-  font-size: 20px;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.25;
-}
-
-.page h2 {
-  font-size: 16px;
-  font-weight: 600;
-  margin-bottom: 10px;
-}
-
-/* Кот сидит на левой странице и ничего не делает — он тут за настроение */
-.menu-cat {
-  width: 70%;
-  margin: 6% 0;
+/* --- Левая страница --- */
+#logo {
+  width: 100%;
   display: block;
 }
 
 #play {
   width: 100%;
+  margin-top: auto;                /* кнопка живёт внизу страницы */
   padding: 12px 0;
   background: #F3C6D2;
   color: #7A3A4C;
@@ -516,20 +512,26 @@ body.in-menu #app {
   transform: scale(0.97);
 }
 
-/* --- Наклейки-уровни --- */
+/* --- Правая страница: наклейки-уровни --- */
+.page h2 {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
 #level-grid {
   width: 100%;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px;
+  gap: 7px;
 }
 
 /* Рамка под наклейку — тонкая двойная линия, как в альбомах нулевых.
    Открытый уровень показывает свою сцену, закрытый — замок. */
 .level-card {
   aspect-ratio: 1 / 1.3;
-  padding: 3px;
-  background: var(--paper);
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.5);
   border: 1px double var(--frame);
   border-radius: 4px;
   display: flex;
@@ -540,16 +542,20 @@ body.in-menu #app {
   cursor: pointer;
 }
 
+/* Превью размыто нарочно: резкий кусок уровня в такой рамке выглядит
+   обрезанным скриншотом, а мягкий читается как наклейка.
+   Лёгкое увеличение прячет светлые края, которые даёт само размытие */
 .level-card img {
   width: 100%;
   height: 100%;
-  object-fit: cover;               /* фон уровня обрезается по рамке */
-  border-radius: 2px;
+  object-fit: cover;
   display: block;
+  filter: blur(1.6px);
+  transform: scale(1.12);
 }
 
 .level-card:active img {
-  transform: scale(0.96);
+  transform: scale(1.06);
 }
 
 .level-card.locked {
@@ -560,14 +566,14 @@ body.in-menu #app {
 /* --- Листание страниц альбома --- */
 #menu-pages {
   margin-top: auto;                /* прижимаем к низу страницы */
-  padding-top: 10px;
+  padding-top: 6px;
   display: flex;
   gap: 14px;
 }
 
 #menu-pages button {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
