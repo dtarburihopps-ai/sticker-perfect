@@ -41,6 +41,51 @@
 
 const LEVELS = {
 
+  // --- Уровень 0: обложка альбома ---
+  //
+  // Вступление, а не уровень: играется один раз, в меню не показывается
+  // и в счёт пройденного не идёт. Его задача — за десять секунд, без
+  // единого слова, объяснить, что тут делают: берут наклейку и кладут
+  // на место.
+  //
+  // Места нарочно видны: у каждого напечатан контур по форме своей
+  // наклейки. Промахнуться некуда, и подсказывать словами не надо.
+  //
+  // Последняя наклейка — название игры. Она приходит в полосу сама,
+  // когда разложены остальные, и её место ждёт над всеми: приклеил
+  // название — альбом твой, дальше меню.
+  //
+  //     python tools/cover.py     обложка и координаты наклеек
+  intro: {
+    intro: true,             // не уровень, а вступление: см. menu.js
+    background: 'images/cover.jpg',
+    wall: '#C98E52',         // стол по краям, пипеткой с картинки
+    mascot: false,           // кот сюда не приходит: финал и так про альбом
+
+    stickers: {
+      camera: { image: 'images/sticker-camera.png', width: 0.2765, height: 0.1156, spot: 'images/spot-camera.png' },
+      books:  { image: 'images/sticker-books.png', width: 0.2404, height: 0.1454, spot: 'images/spot-books.png' },
+      cocoa:  { image: 'images/sticker-cocoa.png', width: 0.2284, height: 0.1031, spot: 'images/spot-cocoa.png' },
+      plant:  { image: 'images/sticker-plant.png', width: 0.2404, height: 0.1130, spot: 'images/spot-plant.png' },
+      yarn:   { image: 'images/sticker-yarn.png', width: 0.2164, height: 0.0828, spot: 'images/spot-yarn.png' },
+      logo:   { image: 'images/logo.png', width: 0.4809, height: 0.1553, spot: 'images/spot-logo.png' }
+    },
+
+    slots: [
+      { id: 'camera', sticker: 'camera', x: 0.2783, bottom: 0.3864 },
+      { id: 'books',  sticker: 'books',  x: 0.4887, bottom: 0.5277 },
+      { id: 'cocoa',  sticker: 'cocoa',  x: 0.2844, bottom: 0.6244 },
+      { id: 'plant',  sticker: 'plant',  x: 0.5068, bottom: 0.7473 },
+      { id: 'yarn',   sticker: 'yarn',   x: 0.3324, bottom: 0.8501 },
+      { id: 'logo',   sticker: 'logo',   x: 0.2723, bottom: 0.2546, last: true }
+    ],
+
+    tray: ['camera', 'books', 'cocoa', 'plant', 'yarn'],
+
+    // Название приходит в полосу последним, когда остальное разложено
+    final: 'logo'
+  },
+
   // --- Уровень 1: магниты на закрытой дверце ---
   //
   // Здесь нет ни одного правильного места: игрок клеит магниты как хочет.

@@ -11,7 +11,16 @@
 
 // Порядок уровней задан порядком записей в levels.js — второго списка
 // не заводим, иначе однажды забудем поправить один из двух.
-const LEVEL_NAMES = Object.keys(LEVELS);
+//
+// Вступление в этот список не входит: оно не уровень, в альбоме
+// не показывается и играется один раз.
+const LEVEL_NAMES = Object.keys(LEVELS).filter(function (name) {
+  return !LEVELS[name].intro;
+});
+
+const INTRO_NAME = Object.keys(LEVELS).find(function (name) {
+  return LEVELS[name].intro;
+}) || null;
 
 // Сколько наклеек помещается на страницу альбома. Больше не влезает:
 // две колонки по три ряда — и наклейка ещё достаточно крупная, чтобы
@@ -27,6 +36,26 @@ const PER_PAGE = 6;
 // localStorage живёт в браузере: закрыла игру — прогресс остался.
 // В телеграме у мини-аппа свой браузер, но ведёт себя так же.
 const PROGRESS_KEY = 'sticker-perfect-open';
+const INTRO_KEY = 'sticker-perfect-intro';
+
+// Вступление показывается один раз: во второй запуск игрок хочет играть,
+// а не смотреть, как открывается альбом.
+function introSeen() {
+  try {
+    return localStorage.getItem(INTRO_KEY) === '1';
+  } catch (e) {
+    return false;
+  }
+}
+
+function introDone() {
+  try {
+    localStorage.setItem(INTRO_KEY, '1');
+    log('Вступление пройдено');
+  } catch (e) {
+    log('Вступление сохранить не вышло — хранилище недоступно');
+  }
+}
 
 function openedCount() {
   // Первый уровень открыт всегда, иначе играть было бы не во что
@@ -145,6 +174,9 @@ const asked = new URLSearchParams(location.search).get('level');
 
 if (asked && LEVELS[asked]) {
   loadLevel(asked);
+} else if (INTRO_NAME && !introSeen()) {
+  // Самый первый запуск: игра начинается с закрытого альбома
+  loadLevel(INTRO_NAME);
 } else {
   if (asked) log('Уровня', asked, 'здесь нет — открываем меню');
   showMenu();

@@ -15,6 +15,7 @@
   --reject-time:  150ms;   /* «не туда» */
   --mascot-time:  620ms;   /* кот выезжает снизу в конце уровня */
   --next-time:    420ms;   /* стрелка «дальше» проявляется в конце уровня */
+  --arrive-time:  520ms;   /* последняя наклейка вступления приходит в полосу */
 
   --next-bg:      #7FBF4D;  /* зелень кнопки «дальше» */
   --next-ink:     #FFFFFF;  /* сама стрелка */
@@ -317,9 +318,10 @@ html, body {
 }
 
 /* display: flex сильнее, чем hidden — без этой строки панель висела бы
-   на экране с самого начала уровня */
+   на экране с самого начала уровня, а спрятанная кнопка всё равно
+   занимала бы место в ряду */
 #finish[hidden],
-#next-level[hidden] {
+#finish button[hidden] {
   display: none;
 }
 
@@ -597,4 +599,47 @@ body.in-menu #app {
 
 #menu-pages button:active {
   opacity: 1;
+}
+
+/* --- Вступление: обложка альбома --- */
+
+/* Контур места: печатная линия по форме своей наклейки. Лежит на фоне
+   под стикерами и тапы не ловит — их, как везде, ловит сцена */
+.spot {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.spot[hidden] {
+  display: none;
+}
+
+/* Последняя наклейка приходит в опустевшую полосу: не выскакивает,
+   а проявляется, иначе выглядит как сбой отрисовки */
+.sticker.arrive {
+  animation: arrive var(--arrive-time) ease-out both;
+}
+
+@keyframes arrive {
+  from { opacity: 0; transform: scale(0.86); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+/* Уходить со вступления некуда: это первый экран игры */
+#app.intro #back-to-menu {
+  display: none;
+}
+
+/* В конце вступления стрелка встаёт в полосу внизу: к этому моменту
+   полоса пуста, палец уже там, и наклейки на обложке ничем не закрыты */
+#app.intro #finish {
+  top: auto;
+  bottom: calc(var(--tray-height) / 2 + env(safe-area-inset-bottom));
+  transform: translate(-50%, 50%);
+}
+
+#app.intro #next-level {
+  width: 96px;
+  height: 96px;
 }

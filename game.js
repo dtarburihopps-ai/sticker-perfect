@@ -49,6 +49,11 @@ const TOUCH_MIN = 44;
 // а игроку — увидеть собранную картинку
 const MASCOT_DELAY = 450;
 
+// Пауза перед последней наклейкой на вступлении. Больше, чем у кота:
+// игрок должен успеть понять, что обложка готова, и только потом
+// увидеть, что пришло название
+const FINAL_DELAY = 700;
+
 // --- Telegram ---
 // Осторожно: скрипт телеграма создаёт window.Telegram.WebApp ВСЕГДА,
 // даже в обычном браузере. Поэтому одного его наличия мало —
@@ -122,6 +127,7 @@ let selected = null;   // какой стикер сейчас выбран
 let trayOffset = 0;    // с какого по счёту стикера показана полоса
 let placeOrder = 0;    // счётчик постановок: кто позже, тот выше лежит
 let finished = false;  // уровень уже собран
+let finalGiven = false; // последняя наклейка вступления уже выдана
 
 // Листание полосы. Само по себе оно не обязательно — стикеры и так
 // подъезжают, когда предыдущие улетают. Но игрок может захотеть
@@ -157,6 +163,10 @@ function loadLevel(name) {
   // проверяется только в конце: порядок в ряду или признак в отсеке.
   anySlot = ordered || grouped;
   app.classList.toggle('movable', free || anySlot);
+
+  // Вступление ведёт себя иначе: уходить с него некуда — это первый
+  // экран игры, — а его стрелка в конце открывает меню
+  app.classList.toggle('intro', !!level.intro);
 
   // Полоса внизу подстраивается под уровень: карандаши длинные и узкие,
   // при обычной высоте восемь штук ужимаются в ниточки, в которые не попасть.
@@ -195,6 +205,18 @@ function buildSlots() {
       scene.appendChild(element);
     }
 
+    // Но на вступлении места видны нарочно: у каждого напечатан контур
+    // по форме своей наклейки. Это и есть всё обучение уровня.
+    const kind = level.stickers[data.sticker];
+    let outline = null;
+    if (kind && kind.spot) {
+      outline = document.createElement('img');
+      outline.className = 'spot';
+      outline.src = kind.spot;
+      outline.alt = '';
+      decorLayer.appendChild(outline);
+    }
+
     const slot = {
       id: data.id,
       sticker: data.sticker,
@@ -204,7 +226,9 @@ function buildSlots() {
       group: data.group || null,
       filled: !!data.filled,
       fixed: !!data.fixed,      // затравку с этого места не снять
-      element: element
+      last: !!data.last,        // место последней наклейки уровня
+      element: element,
+      outline: outline
     };
 
     slots.push(slot);
@@ -598,12 +622,30 @@ function layoutOverlays() {
 
 // Места невидимы и тапы не ловят, поэтому в обычной игре их в разметке нет.
 // Показываются только при SHOW_SLOTS, когда надо настроить координаты.
+//
+// Контуры на вступлении — другое дело: они видны всегда и лежат ровно
+// там, где встанет наклейка, а не в зоне попадания пальца (та шире).
 function layoutSlots() {
-  if (!SHOW_SLOTS) return;
+  const box = backgroundBox();
 
   slots.forEach(function (slot) {
-    const rect = slotRect(slot);
+    if (slot.outline) {
+      const kind = level.stickers[slot.sticker];
+      const width = kind.width * box.width;
+      const height = kind.height * box.height;
 
+      slot.outline.style.width = width + 'px';
+      slot.outline.style.height = height + 'px';
+      slot.outline.style.left = (box.left + slot.x * box.width) + 'px';
+      slot.outline.style.top = (box.top + slot.bottom * box.height - height) + 'px';
+
+      // Место занято — контур больше не нужен
+      slot.outline.hidden = slot.filled;
+    }
+
+    if (!SHOW_SLOTS) return;
+
+    const rect = slotRect(slot);
     slot.element.style.left = rect.left + 'px';
     slot.element.style.top = rect.top + 'px';
     slot.element.style.width = (rect.right - rect.left) + 'px';
@@ -1000,23 +1042,45 @@ function checkFinished() {
     return;
   }
 
+  // Вступление отдаёт последнюю наклейку — название игры — только когда
+  // разложено всё остальное. До этого её нет ни в полосе, ни в очереди:
+  // сначала обложка, потом имя.
+  // Смотрим не на флаг, а на саму наклейку: пока её нет на экране,
+  // уровень не собран, даже если проверка придёт сюда второй раз —
+  // а она приходит, пока название летит в полосу.
+  if (level.final && !stickers.some(function (s) { return s.type === level.final; })) {
+    if (!finalGiven) {
+      finalGiven = true;
+      log('Обложка разложена, несём название');
+      setTimeout(giveFinal, level.finalDelay || FINAL_DELAY);
+    }
+    return;
+  }
+
   finished = true;
   log('Уровень собран');
 
   // Следующий уровень открывается сразу, ещё до прихода кота:
-  // игрок может выйти в меню кнопкой, и уровень должен его там ждать
-  unlockAfter(levelName);
+  // игрок может выйти в меню кнопкой, и уровень должен его там ждать.
+  // Вступление в счёт не идёт — оно не уровень.
+  if (!level.intro) unlockAfter(levelName);
 
   // Небольшая пауза: пусть последний стикер успеет улечься,
   // а игрок — увидеть готовую картинку
   setTimeout(function () {
-    mascot.classList.add('show');
-    log('Кот пришёл');
+    // На вступлении кота нет: там финал и так про альбом, а второй
+    // герой на экране только отвлекал бы от названия
+    if (level.mascot !== false) {
+      mascot.classList.add('show');
+      log('Кот пришёл');
+    }
 
     // Кнопки появляются в ту же секунду, что и кот.
     // Если следующего уровня нет — стрелке некуда вести, и остаётся
-    // только «в меню».
-    nextLevelButton.hidden = !nextLevelName();
+    // только «в меню». На вступлении наоборот: там одна стрелка,
+    // и ведёт она в альбом.
+    nextLevelButton.hidden = !level.intro && !nextLevelName();
+    toMenuButton.hidden = !!level.intro;
 
     finishPanel.hidden = false;
     // hidden сняли — даём браузеру мгновение, иначе он посчитает, что
@@ -1027,6 +1091,16 @@ function checkFinished() {
       finishPanel.classList.add('show');
     }, 20);
   }, level.mascotDelay || MASCOT_DELAY);
+}
+
+// Последняя наклейка приходит в опустевшую полосу и мягко проявляется:
+// резкое появление на пустом месте выглядит как ошибка отрисовки.
+function giveFinal() {
+  const sticker = createSticker(level.final);
+  sticker.element.classList.add('arrive');
+
+  layout();
+  log('Название пришло в полосу');
 }
 
 // Пуговицы разложены верно, когда в КАЖДОМ отсеке четыре штуки с общим
@@ -1081,6 +1155,13 @@ function nextLevelName() {
 // Переход адресом, с перезагрузкой страницы. Так уровень начинается
 // с чистого листа: не надо руками разбирать предыдущий.
 nextLevelButton.addEventListener('click', function () {
+  // Вступление пройдено — больше его не показываем, уходим в альбом
+  if (level.intro) {
+    introDone();
+    goToMenu();
+    return;
+  }
+
   const next = nextLevelName();
   if (!next) return;
 

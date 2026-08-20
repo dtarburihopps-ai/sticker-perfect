@@ -35,3 +35,52 @@ print("обложка по высоте:", round(col[0] / H, 4), "…", round(co
 print("размер обложки:", row[-1] - row[0], "x", col[-1] - col[0],
       "= 1 :", round((col[-1] - col[0]) / (row[-1] - row[0]), 3))
 print("цвет стола:", "#%02X%02X%02X" % px[6, 6])
+
+# ---------------------------------------------------------------
+#  Готовые строки для levels.js
+# ---------------------------------------------------------------
+#
+# Раскладку наклеек удобно держать в долях ОБЛОЖКИ: 0.5 — её середина.
+# Движку же нужны доли всей картинки. Пересчёт делает этот скрипт,
+# руками такие числа не пишут.
+#
+#   имя, x и y центра в долях обложки, ширина в долях обложки
+SPOTS = [
+    ("camera", 0.34, 0.30, 0.46),
+    ("books",  0.66, 0.45, 0.40),
+    ("cocoa",  0.31, 0.59, 0.38),
+    ("plant",  0.69, 0.73, 0.40),
+    ("yarn",   0.38, 0.87, 0.36),
+    ("logo",   0.50, 0.12, 0.80),
+]
+
+cx0, cx1 = row[0] / W, row[-1] / W
+cy0, cy1 = col[0] / H, col[-1] / H
+cw, ch = cx1 - cx0, cy1 - cy0
+
+print()
+print("    stickers: {")
+for name, fx, fy, fw in SPOTS:
+    art = Image.open(os.path.join(ROOT, "images",
+                                  ("logo.png" if name == "logo" else "sticker-" + name + ".png")))
+    width = fw * cw                                   # доля ширины картинки
+    height = width * W * (art.height / art.width) / H  # доля высоты картинки
+    file = "images/logo.png" if name == "logo" else "images/sticker-%s.png" % name
+    spot = ", spot: 'images/spot-%s.png'" % name
+    print("      %-7s { image: '%s', width: %.4f, height: %.4f%s }," %
+          (name + ":", file, width, height, spot))
+print("    },")
+
+print()
+print("    slots: [")
+for name, fx, fy, fw in SPOTS:
+    art = Image.open(os.path.join(ROOT, "images",
+                                  ("logo.png" if name == "logo" else "sticker-" + name + ".png")))
+    width = fw * cw
+    height = width * W * (art.height / art.width) / H
+    x = cx0 + fx * cw - width / 2
+    bottom = cy0 + fy * ch + height / 2
+    last = ", last: true" if name == "logo" else ""
+    print("      { id: '%s', sticker: '%s', x: %.4f, bottom: %.4f%s }," %
+          (name, name, x, bottom, last))
+print("    ],")

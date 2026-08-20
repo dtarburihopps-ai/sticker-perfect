@@ -100,3 +100,13 @@ for name, pixels in zip(NAMES, blobs):
 
     print(name, piece.size,
           os.path.getsize(os.path.join(ROOT, "images", "sticker-" + name + ".png")) // 1024, "КБ")
+
+# Контур под название игры: сюда встаёт последняя наклейка уровня
+logo = Image.open(os.path.join(ROOT, "images/logo.png")).convert("RGBA")
+alpha = logo.getchannel("A").point(lambda v: 255 if v > 120 else 0)
+edge = alpha.filter(ImageFilter.FIND_EDGES).filter(ImageFilter.MaxFilter(5))
+spot = Image.new("RGBA", logo.size, SPOT_COLOUR + (255,))
+spot.putalpha(edge.point(lambda v: int(v * 0.55)))
+spot.save(os.path.join(ROOT, "images/spot-logo.png"), optimize=True)
+print("spot-logo.png", spot.size,
+      os.path.getsize(os.path.join(ROOT, "images/spot-logo.png")) // 1024, "КБ")
