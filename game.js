@@ -639,8 +639,12 @@ function layoutSlots() {
       slot.outline.style.left = (box.left + slot.x * box.width) + 'px';
       slot.outline.style.top = (box.top + slot.bottom * box.height - height) + 'px';
 
-      // Место занято — контур больше не нужен
-      slot.outline.hidden = slot.filled;
+      // Место занято — контур больше не нужен.
+      //
+      // Место последней наклейки прячем до самого её прихода: увидев
+      // лишний контур сразу, игрок решит, что чего-то недодали, и будет
+      // искать шестую наклейку в пустой полосе.
+      slot.outline.hidden = slot.filled || (slot.last && !finalGiven);
     }
 
     if (!SHOW_SLOTS) return;
@@ -1098,6 +1102,11 @@ function checkFinished() {
 function giveFinal() {
   const sticker = createSticker(level.final);
   sticker.element.classList.add('arrive');
+
+  // Место под название показываем в ту же секунду: наклейка и её контур
+  // появляются вместе, и сразу видно, куда её нести
+  const spot = slots.filter(function (s) { return s.last; })[0];
+  if (spot && spot.outline) spot.outline.classList.add('arrive');
 
   layout();
   log('Название пришло в полосу');
