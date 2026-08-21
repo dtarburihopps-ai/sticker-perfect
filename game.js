@@ -195,7 +195,10 @@ function loadLevel(name) {
   buildStickers();
   buildOverlays();
 
-  background.addEventListener('load', scheduleLayout);
+  // Фон мог ещё не прийти: без его размеров раскладывать нечего.
+  // Скобки не для красоты — обработчику передают объект события,
+  // а scheduleLayout ждёт номер попытки.
+  background.addEventListener('load', function () { scheduleLayout(); });
   scheduleLayout();
 
   log('Уровень загружен:', name, '| мест:', state.slots.length, '| стикеров:', state.stickers.length);

@@ -207,7 +207,11 @@ function moveTo(sticker, point) {
 // браузер перестаёт выдавать кадры, и rAF никогда не срабатывает —
 // игра осталась бы неразложенной.
 function scheduleLayout(attempt) {
-  attempt = attempt || 0;
+  // Именно число, а не «что пришло». Эта функция висит ещё и обработчиком
+  // события load, а туда прилетает объект события: attempt || 0 оставлял
+  // его как есть, сравнение attempt < 200 давало ложь, и попытки
+  // обрывались на первой же.
+  attempt = typeof attempt === 'number' ? attempt : 0;
 
   setTimeout(function () {
     if (scene.clientWidth && background.naturalWidth) {
