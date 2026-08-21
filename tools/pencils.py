@@ -225,7 +225,7 @@ print("\n// --- карандаши ---")
 print("// картинка 1 : %.1f, на экране 1 : %.1f — растянута на %.0f%%"
       % (sample.height / float(sample.width), height / width, (stretch - 1) * 100))
 for i in range(PENCILS):
-    print("'pencil-%d': { image: 'images/pencil-%d.png', width: %.4f, height: %.4f, rank: %d },"
+    print("'pencil-%d': { image: 'web/pencil-%d.webp', width: %.4f, height: %.4f, rank: %d },"
           % (i + 1, i + 1, width / BG_W, height / BG_H, i + 1))
 
 print("\n// --- места: десять колонок в коробке ---")

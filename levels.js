@@ -58,17 +58,17 @@ const LEVELS = {
   //     python tools/cover.py     обложка и координаты наклеек
   intro: {
     intro: true,             // не уровень, а вступление: см. menu.js
-    background: 'images/cover.jpg',
+    background: 'web/cover.webp',
     wall: '#C98E52',         // стол по краям, пипеткой с картинки
     mascot: false,           // кот сюда не приходит: финал и так про альбом
 
     stickers: {
-      camera: { image: 'images/sticker-camera.png', width: 0.2765, height: 0.1156, spot: 'images/spot-camera.png' },
-      books:  { image: 'images/sticker-books.png', width: 0.2404, height: 0.1454, spot: 'images/spot-books.png' },
-      cocoa:  { image: 'images/sticker-cocoa.png', width: 0.2284, height: 0.1031, spot: 'images/spot-cocoa.png' },
-      plant:  { image: 'images/sticker-plant.png', width: 0.2404, height: 0.1130, spot: 'images/spot-plant.png' },
-      yarn:   { image: 'images/sticker-yarn.png', width: 0.2164, height: 0.0828, spot: 'images/spot-yarn.png' },
-      logo:   { image: 'images/logo.png', width: 0.4809, height: 0.1553, spot: 'images/spot-logo.png' }
+      camera: { image: 'web/sticker-camera.webp', width: 0.2765, height: 0.1156, spot: 'web/spot-camera.webp' },
+      books:  { image: 'web/sticker-books.webp', width: 0.2404, height: 0.1454, spot: 'web/spot-books.webp' },
+      cocoa:  { image: 'web/sticker-cocoa.webp', width: 0.2284, height: 0.1031, spot: 'web/spot-cocoa.webp' },
+      plant:  { image: 'web/sticker-plant.webp', width: 0.2404, height: 0.1130, spot: 'web/spot-plant.webp' },
+      yarn:   { image: 'web/sticker-yarn.webp', width: 0.2164, height: 0.0828, spot: 'web/spot-yarn.webp' },
+      logo:   { image: 'web/logo.webp', width: 0.4809, height: 0.1553, spot: 'web/spot-logo.webp' }
     },
 
     slots: [
@@ -93,7 +93,7 @@ const LEVELS = {
   // и магниты не налезают друг на друга.
   door: {
     mode: 'free',
-    background: 'images/door.png',
+    background: 'web/door.webp',
     wall: '#BBBCDB',
 
     // Куда можно клеить: панель двери без канта
@@ -113,16 +113,16 @@ const LEVELS = {
     // Размер магнита задан не шириной, а равной площадью: иначе высокий
     // овал с котом выглядел бы вдвое крупнее звезды при той же ширине.
     stickers: {
-      cat:   { image: 'images/magnet-cat.png',   width: 0.1264, height: 0.1055 },
-      daisy: { image: 'images/magnet-daisy.png', width: 0.1382, height: 0.0965 },
-      photo: { image: 'images/magnet-photo.png', width: 0.1304, height: 0.1023 },
-      heart: { image: 'images/magnet-heart.png', width: 0.1495, height: 0.0892 },
-      egg:   { image: 'images/magnet-egg.png',   width: 0.1251, height: 0.1066 },
-      toast: { image: 'images/magnet-toast.png', width: 0.1346, height: 0.0991 },
-      tulip: { image: 'images/magnet-tulip.png', width: 0.1348, height: 0.0990 },
-      mug:   { image: 'images/magnet-mug.png',   width: 0.1477, height: 0.0903 },
-      plant: { image: 'images/magnet-plant.png', width: 0.1393, height: 0.0958 },
-      star:  { image: 'images/magnet-star.png',  width: 0.1429, height: 0.0934 }
+      cat:   { image: 'web/magnet-cat.webp',   width: 0.1264, height: 0.1055 },
+      daisy: { image: 'web/magnet-daisy.webp', width: 0.1382, height: 0.0965 },
+      photo: { image: 'web/magnet-photo.webp', width: 0.1304, height: 0.1023 },
+      heart: { image: 'web/magnet-heart.webp', width: 0.1495, height: 0.0892 },
+      egg:   { image: 'web/magnet-egg.webp',   width: 0.1251, height: 0.1066 },
+      toast: { image: 'web/magnet-toast.webp', width: 0.1346, height: 0.0991 },
+      tulip: { image: 'web/magnet-tulip.webp', width: 0.1348, height: 0.0990 },
+      mug:   { image: 'web/magnet-mug.webp',   width: 0.1477, height: 0.0903 },
+      plant: { image: 'web/magnet-plant.webp', width: 0.1393, height: 0.0958 },
+      star:  { image: 'web/magnet-star.webp',  width: 0.1429, height: 0.0934 }
     },
 
     // Затравка: кот висит на двери с самого начала. Он и объясняет
@@ -136,7 +136,7 @@ const LEVELS = {
   },
 
   fridge: {
-    background: 'images/fridge.png',
+    background: 'web/fridge.webp',
 
     // Цвет стены вокруг холодильника: им заливаются поля, если картинка
     // не закрывает экран целиком. Взят пипеткой с самой картинки.
@@ -145,28 +145,28 @@ const LEVELS = {
     // Обстановка: стоит в холодильнике с самого начала и не двигается.
     // Тарелки — подсказка игроку: сюда кладут арбуз.
     decor: [
-      { image: 'images/plate.png', x: 0.1074, bottom: 0.4957, width: 0.3835 },
-      { image: 'images/plate.png', x: 0.5188, bottom: 0.4957, width: 0.3835 }
+      { image: 'web/plate.webp', x: 0.1074, bottom: 0.4957, width: 0.3835 },
+      { image: 'web/plate.webp', x: 0.5188, bottom: 0.4957, width: 0.3835 }
     ],
 
     // Слои поверх стикеров. Передняя стенка ящиков лежит НАД продуктами,
     // поэтому они выглядят лежащими внутри ящика, а не наклеенными на него.
     // Прозрачность задаётся в style.css, класс .overlay
     overlays: [
-      { image: 'images/drawers-front.png', x: 0.0907, y: 0.7233, width: 0.8131 }
+      { image: 'web/drawers-front.webp', x: 0.0907, y: 0.7233, width: 0.8131 }
     ],
 
     stickers: {
-      cola:   { image: 'images/cola.png',        width: 0.0931, height: 0.0960 },
-      bottle: { image: 'images/bottle.png',      width: 0.1037, height: 0.1494 },
-      pepper: { image: 'images/pepper.png',      width: 0.0872, height: 0.0629 },
-      orange: { image: 'images/orange.png',      width: 0.0872, height: 0.0574 },
+      cola:   { image: 'web/cola.webp',        width: 0.0931, height: 0.0960 },
+      bottle: { image: 'web/bottle.webp',      width: 0.1037, height: 0.1494 },
+      pepper: { image: 'web/pepper.webp',      width: 0.0872, height: 0.0629 },
+      orange: { image: 'web/orange.webp',      width: 0.0872, height: 0.0574 },
       // У солений картинка не общая: банки выглядят по-разному, а место
       // принимает любую. Поэтому картинка задаётся в полосе, у каждой своя.
       pickle: { width: 0.1337, height: 0.1264 },
 
-      half:   { image: 'images/melon-half.png',  width: 0.3347, height: 0.1579 },
-      slice:  { image: 'images/melon-slice.png', width: 0.1381, height: 0.0783 }
+      half:   { image: 'web/melon-half.webp',  width: 0.3347, height: 0.1579 },
+      slice:  { image: 'web/melon-slice.webp', width: 0.1381, height: 0.0783 }
     },
 
     slots: [
@@ -244,17 +244,17 @@ const LEVELS = {
     // иначе игрок просто выкладывает подряд и не думает вообще.
     tray: [
       'cola', 'pepper', 'half', 'orange', 'bottle',
-      { type: 'pickle', image: 'images/pickle-1.png' },
+      { type: 'pickle', image: 'web/pickle-1.webp' },
       'cola', 'orange', 'slice', 'pepper', 'cola',
-      { type: 'pickle', image: 'images/pickle-2.png' },
+      { type: 'pickle', image: 'web/pickle-2.webp' },
       'pepper', 'bottle', 'orange', 'slice', 'cola',
-      { type: 'pickle', image: 'images/pickle-3.png' },
+      { type: 'pickle', image: 'web/pickle-3.webp' },
       'orange', 'pepper', 'cola', 'slice', 'bottle',
-      { type: 'pickle', image: 'images/pickle-4.png' },
+      { type: 'pickle', image: 'web/pickle-4.webp' },
       'orange', 'pepper', 'cola', 'orange', 'pepper',
-      { type: 'pickle', image: 'images/pickle-5.png' },
+      { type: 'pickle', image: 'web/pickle-5.webp' },
       'cola', 'orange', 'pepper',
-      { type: 'pickle', image: 'images/pickle-6.png' }
+      { type: 'pickle', image: 'web/pickle-6.webp' }
     ]
   },
 
@@ -273,7 +273,7 @@ const LEVELS = {
   // кот не пришёл — значит ещё не то. Игрок догадывается сам.
   pencils: {
     mode: 'order',
-    background: 'images/pencil-table.png',
+    background: 'web/pencil-table.webp',
     wall: '#CCB89E',
 
     // Полоса выше обычной: карандаш длинный и узкий, при высоте 110
@@ -289,16 +289,16 @@ const LEVELS = {
     // rank — правильное место в ряду. Оно же порядковый номер оттенка:
     // 1 самый светлый, 10 самый тёмный.
     stickers: {
-      'pencil-1':  { image: 'images/pencil-1.png',  width: 0.0689, height: 0.2681, rank: 1 },
-      'pencil-2':  { image: 'images/pencil-2.png',  width: 0.0689, height: 0.2681, rank: 2 },
-      'pencil-3':  { image: 'images/pencil-3.png',  width: 0.0689, height: 0.2681, rank: 3 },
-      'pencil-4':  { image: 'images/pencil-4.png',  width: 0.0689, height: 0.2681, rank: 4 },
-      'pencil-5':  { image: 'images/pencil-5.png',  width: 0.0689, height: 0.2681, rank: 5 },
-      'pencil-6':  { image: 'images/pencil-6.png',  width: 0.0689, height: 0.2681, rank: 6 },
-      'pencil-7':  { image: 'images/pencil-7.png',  width: 0.0689, height: 0.2681, rank: 7 },
-      'pencil-8':  { image: 'images/pencil-8.png',  width: 0.0689, height: 0.2681, rank: 8 },
-      'pencil-9':  { image: 'images/pencil-9.png',  width: 0.0689, height: 0.2681, rank: 9 },
-      'pencil-10': { image: 'images/pencil-10.png', width: 0.0689, height: 0.2681, rank: 10 }
+      'pencil-1':  { image: 'web/pencil-1.webp',  width: 0.0689, height: 0.2681, rank: 1 },
+      'pencil-2':  { image: 'web/pencil-2.webp',  width: 0.0689, height: 0.2681, rank: 2 },
+      'pencil-3':  { image: 'web/pencil-3.webp',  width: 0.0689, height: 0.2681, rank: 3 },
+      'pencil-4':  { image: 'web/pencil-4.webp',  width: 0.0689, height: 0.2681, rank: 4 },
+      'pencil-5':  { image: 'web/pencil-5.webp',  width: 0.0689, height: 0.2681, rank: 5 },
+      'pencil-6':  { image: 'web/pencil-6.webp',  width: 0.0689, height: 0.2681, rank: 6 },
+      'pencil-7':  { image: 'web/pencil-7.webp',  width: 0.0689, height: 0.2681, rank: 7 },
+      'pencil-8':  { image: 'web/pencil-8.webp',  width: 0.0689, height: 0.2681, rank: 8 },
+      'pencil-9':  { image: 'web/pencil-9.webp',  width: 0.0689, height: 0.2681, rank: 9 },
+      'pencil-10': { image: 'web/pencil-10.webp', width: 0.0689, height: 0.2681, rank: 10 }
     },
 
     // Размер места. В холодильнике его брали у продукта, который сюда идёт,
@@ -339,7 +339,7 @@ const LEVELS = {
   // значит ещё не то. Пуговицу можно вынуть и переложить.
   buttons: {
     mode: 'groups',
-    background: 'images/buttons-box.png',
+    background: 'web/buttons-box.webp',
     wall: '#EAC08F',
 
     trayVisible: 6,
@@ -348,22 +348,22 @@ const LEVELS = {
     // нарочно: размер и число дырочек у всех одинаковые, иначе игрок
     // начал бы сортировать по ним.
     stickers: {
-      'circle-yellow': { image: 'images/button-circle-yellow.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'yellow' },
-      'circle-coral': { image: 'images/button-circle-coral.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'coral' },
-      'circle-violet': { image: 'images/button-circle-violet.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'violet' },
-      'circle-graphite': { image: 'images/button-circle-graphite.png', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'graphite' },
-      'flower-yellow': { image: 'images/button-flower-yellow.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'yellow' },
-      'flower-coral': { image: 'images/button-flower-coral.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'coral' },
-      'flower-violet': { image: 'images/button-flower-violet.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'violet' },
-      'flower-graphite': { image: 'images/button-flower-graphite.png', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'graphite' },
-      'square-yellow': { image: 'images/button-square-yellow.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'yellow' },
-      'square-coral': { image: 'images/button-square-coral.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'coral' },
-      'square-violet': { image: 'images/button-square-violet.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'violet' },
-      'square-graphite': { image: 'images/button-square-graphite.png', width: 0.1524, height: 0.0914, shape: 'square', colour: 'graphite' },
-      'heart-yellow': { image: 'images/button-heart-yellow.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'yellow' },
-      'heart-coral': { image: 'images/button-heart-coral.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'coral' },
-      'heart-violet': { image: 'images/button-heart-violet.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'violet' },
-      'heart-graphite': { image: 'images/button-heart-graphite.png', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'graphite' }
+      'circle-yellow': { image: 'web/button-circle-yellow.webp', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'yellow' },
+      'circle-coral': { image: 'web/button-circle-coral.webp', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'coral' },
+      'circle-violet': { image: 'web/button-circle-violet.webp', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'violet' },
+      'circle-graphite': { image: 'web/button-circle-graphite.webp', width: 0.1524, height: 0.0914, shape: 'circle', colour: 'graphite' },
+      'flower-yellow': { image: 'web/button-flower-yellow.webp', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'yellow' },
+      'flower-coral': { image: 'web/button-flower-coral.webp', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'coral' },
+      'flower-violet': { image: 'web/button-flower-violet.webp', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'violet' },
+      'flower-graphite': { image: 'web/button-flower-graphite.webp', width: 0.1524, height: 0.0914, shape: 'flower', colour: 'graphite' },
+      'square-yellow': { image: 'web/button-square-yellow.webp', width: 0.1524, height: 0.0914, shape: 'square', colour: 'yellow' },
+      'square-coral': { image: 'web/button-square-coral.webp', width: 0.1524, height: 0.0914, shape: 'square', colour: 'coral' },
+      'square-violet': { image: 'web/button-square-violet.webp', width: 0.1524, height: 0.0914, shape: 'square', colour: 'violet' },
+      'square-graphite': { image: 'web/button-square-graphite.webp', width: 0.1524, height: 0.0914, shape: 'square', colour: 'graphite' },
+      'heart-yellow': { image: 'web/button-heart-yellow.webp', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'yellow' },
+      'heart-coral': { image: 'web/button-heart-coral.webp', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'coral' },
+      'heart-violet': { image: 'web/button-heart-violet.webp', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'violet' },
+      'heart-graphite': { image: 'web/button-heart-graphite.webp', width: 0.1524, height: 0.0914, shape: 'heart', colour: 'graphite' }
     },
 
     // Размер места: пуговицы все одного габарита, поэтому он один на всех

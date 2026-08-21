@@ -170,7 +170,7 @@ for i, (kind, _, count) in enumerate(PLAN):
 
 print("\n// --- стекло ---")
 print("overlays: [")
-print("  { image: 'images/vending-glass.png', x: %.4f, y: %.4f, width: %.4f }"
+print("  { image: 'web/vending-glass.webp', x: %.4f, y: %.4f, width: %.4f }"
       % (fx(ZONE_L), fy(GLASS[0]), fx(ZONE_R - ZONE_L)))
 print("],")
 
@@ -199,7 +199,7 @@ while any(pools.values()):
         if pools[kind]:
             mixed.append(pools[kind].pop(0))
 for kind, n in mixed:
-    print("  { type: '%s', image: 'images/vend-%s-%d.png' }," % (kind, kind, n))
+    print("  { type: '%s', image: 'web/vend-%s-%d.webp' }," % (kind, kind, n))
 print("],")
 print("// всего предметов:", len(mixed))
 

@@ -186,7 +186,7 @@ for name, piece in magnets:
     # Сторона равного по площади квадрата — MAGNET_SIDE, отсюда ширина и высота
     width = MAGNET_SIDE * (ratio ** 0.5)
     height = width / ratio
-    print("%-6s { image: 'images/magnet-%s.png', width: %.4f, height: %.4f }," %
+    print("%-6s { image: 'web/magnet-%s.webp', width: %.4f, height: %.4f }," %
           (name + ":", name, width / DW, height / DH))
 
 print("\ngap: %.4f,   // невидимый зазор между магнитами" % (MAGNET_GAP / float(DW)))

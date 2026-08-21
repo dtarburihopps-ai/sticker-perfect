@@ -117,9 +117,11 @@ function drawMenu() {
 
     if (isOpen) {
       // Превью — фон самого уровня. Отдельных картинок не рисуем:
-      // уровень и так узнаётся по своей сцене.
+      // уровень и так узнаётся по своей сцене. Но грузим уменьшенную
+      // копию: в карточку размером с ноготь незачем тянуть фон целиком.
+      // Копии лежат в web/preview/ и делаются tools/optimize.py.
       const preview = document.createElement('img');
-      preview.src = LEVELS[name].background;
+      preview.src = LEVELS[name].background.replace('web/', 'web/preview/');
       preview.alt = '';
       card.appendChild(preview);
 

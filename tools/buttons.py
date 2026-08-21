@@ -159,7 +159,7 @@ print("// Третьего признака у пуговиц нет нароч�
 print("// у всех одинаковые, иначе сортировать начнут по ним.")
 for name in names:
     shape, colour = name.split("-")
-    print("'%s': { image: 'images/button-%s.png', width: %.4f, height: %.4f, shape: '%s', colour: '%s' },"
+    print("'%s': { image: 'web/button-%s.webp', width: %.4f, height: %.4f, shape: '%s', colour: '%s' },"
           % (name, name, fx(BUTTON), fy(BUTTON), shape, colour))
 
 print("\nslotSize: { width: %.4f, height: %.4f }," % (fx(BUTTON), fy(BUTTON)))

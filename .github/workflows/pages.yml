@@ -25,12 +25,13 @@ jobs:
 
       # Наружу отдаём только саму игру. Папку рефов, инструменты и брифы
       # публиковать незачем: это рабочие материалы, а не часть игры,
-      # и рефы весят 24 МБ.
+      # и рефы весят 24 МБ. Картинки берём из web/ — это готовые
+      # лёгкие копии, а тяжёлые оригиналы из images/ наружу не нужны.
       - name: Собрать папку для публикации
         run: |
           mkdir _site
           cp index.html style.css sound.js levels.js game.js menu.js _site/
-          cp -r images _site/
+          cp -r web _site/
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

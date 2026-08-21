@@ -215,11 +215,11 @@ print("pickle: { width: %.4f, height: %.4f },   // %s" %
 plate_h = plate.height * PLATE_W / plate.width
 print("\n// --- decor: тарелки ---")
 for x in PLATE_X:
-    print("{ image: 'images/plate.png', x: %.4f, bottom: %.4f, width: %.4f }," %
+    print("{ image: 'web/plate.webp', x: %.4f, bottom: %.4f, width: %.4f }," %
           (fx(x), fy(SHELF2), fx(PLATE_W)))
 
 print("\n// --- overlays: передняя стенка ящиков ---")
-print("{ image: 'images/drawers-front.png', x: %.4f, y: %.4f, width: %.4f }," %
+print("{ image: 'web/drawers-front.webp', x: %.4f, y: %.4f, width: %.4f }," %
       (fx(front_box[0]), fy(front_box[1]), fx(front_box[2] - front_box[0])))
 
 print("\n// --- slots: банки на верхней полке ---")
@@ -248,7 +248,7 @@ for i in range(PICKLE_COUNT):
           (i + 1, fx(SHELF3_L + i * pickle_w), fy(SHELF3)))
 print("// в полосу (каждая банка своя картинка):")
 for i in range(PICKLE_COUNT):
-    print("{ type: 'pickle', image: 'images/pickle-%d.png' }," % (i + 1))
+    print("{ type: 'pickle', image: 'web/pickle-%d.webp' }," % (i + 1))
 
 print("\n// --- slots: овощи в ящиках ---")
 for kind, bounds, height in (("pepper", DRAWER_LEFT, pepper_h),

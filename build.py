@@ -11,15 +11,11 @@ import io
 import os
 import re
 
-from PIL import Image
-
 BASE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(BASE, "sticker-perfect.html")
 
-# До какой ширины ужимать картинки. Фон рисуется во весь экран,
-# продукты — мелко, поэтому им хватает меньшего размера.
-WIDTHS = {"fridge": 820, "door": 820, "drawers-front": 700}
-DEFAULT_WIDTH = 260
+# Картинки берём из web/ готовыми: их уже пережал tools/optimize.py —
+# нужный размер и формат. Здесь остаётся только вписать их в файл.
 
 
 def read(name):
@@ -28,17 +24,10 @@ def read(name):
 
 
 def data_uri(rel_path):
-    img = Image.open(os.path.join(BASE, rel_path)).convert("RGBA")
-    key = os.path.splitext(os.path.basename(rel_path))[0]
-    width = min(WIDTHS.get(key, DEFAULT_WIDTH), img.width)
-    height = round(img.height * width / img.width)
+    with open(os.path.join(BASE, rel_path), "rb") as f:
+        raw = f.read()
 
-    img = img.resize((width, height), Image.LANCZOS)
-    buf = io.BytesIO()
-    img.save(buf, "WEBP", quality=88, method=6)
-    raw = buf.getvalue()
-
-    print("%-22s %4dx%-4d %6.0f КБ" % (rel_path, width, height, len(raw) / 1024))
+    print("%-28s %6.0f КБ" % (rel_path, len(raw) / 1024))
     return "data:image/webp;base64," + base64.b64encode(raw).decode()
 
 
@@ -48,7 +37,7 @@ levels = read("levels.js")
 game = read("game.js")
 
 # Все пути к картинкам в данных уровня заменяем на сами картинки
-for path in sorted(set(re.findall(r"'(images/[^']+)'", levels))):
+for path in sorted(set(re.findall(r"'(web/[^']+)'", levels))):
     levels = levels.replace("'%s'" % path, '"%s"' % data_uri(path))
 
 html = read("index.html")
@@ -56,8 +45,8 @@ body = re.search(r"<body>(.*)</body>", html, re.S).group(1)
 body = re.sub(r"\s*<script[^>]*></script>", "", body)   # скрипты подключим сами
 
 # Картинки, вписанные прямо в разметку (например кот), тоже вшиваем.
-# В HTML пути в двойных кавычках: src="images/cat.png"
-for path in sorted(set(re.findall(r'"(images/[^"]+)"', body))):
+# В HTML пути в двойных кавычках: src="web/cat.webp"
+for path in sorted(set(re.findall(r'"(web/[^"]+)"', body))):
     body = body.replace('"%s"' % path, '"%s"' % data_uri(path))
 
 # Шапку страницы собираем сами, поэтому её содержимое приходится держать

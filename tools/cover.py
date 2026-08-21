@@ -65,8 +65,8 @@ for name, fx, fy, fw in SPOTS:
                                   ("logo.png" if name == "logo" else "sticker-" + name + ".png")))
     width = fw * cw                                   # доля ширины картинки
     height = width * W * (art.height / art.width) / H  # доля высоты картинки
-    file = "images/logo.png" if name == "logo" else "images/sticker-%s.png" % name
-    spot = ", spot: 'images/spot-%s.png'" % name
+    file = "web/logo.webp" if name == "logo" else "web/sticker-%s.webp" % name
+    spot = ", spot: 'web/spot-%s.webp'" % name
     print("      %-7s { image: '%s', width: %.4f, height: %.4f%s }," %
           (name + ":", file, width, height, spot))
 print("    },")
