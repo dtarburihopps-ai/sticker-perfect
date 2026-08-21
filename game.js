@@ -189,6 +189,71 @@ function loadLevel(name) {
   scheduleLayout();
 
   log('Уровень загружен:', name, '| мест:', slots.length, '| стикеров:', stickers.length);
+
+  // Пока игрок собирает этот уровень, тихо тянем картинки следующего.
+  // Ждём события load — оно случается, когда всё нужное ЭТОМУ уровню
+  // уже пришло: отбирать у него сеть нельзя.
+  window.addEventListener('load', function () {
+    preloadLevel(nextLevelName());
+  });
+}
+
+// --- Фоновая загрузка ---
+//
+// Переход на уровень — это перезагрузка страницы. Значит «подгрузить
+// заранее» тут означает ровно одно: положить картинки в кеш браузера.
+// После перезагрузки он возьмёт их оттуда, не спрашивая сеть, и уровень
+// откроется мгновенно — сколько бы он ни весил.
+
+function levelImages(name) {
+  const data = LEVELS[name];
+  if (!data) return [];
+
+  // Пути к картинкам разбросаны по всей записи уровня: фон, стикеры,
+  // контуры мест, обстановка, накладки. Выловить их из записи целиком
+  // проще и надёжнее, чем обходить руками и однажды забыть новое поле.
+  const found = JSON.stringify(data).match(/web\/[\w-]+\.webp/g) || [];
+  return found.filter(function (path, i) { return found.indexOf(path) === i; });
+}
+
+let preloading = false;
+
+function preloadLevel(name) {
+  if (!name || preloading) return;
+
+  // Игрок включил экономию трафика — в сеть без спроса не лезем
+  if (navigator.connection && navigator.connection.saveData) {
+    log('Экономия трафика: наперёд ничего не грузим');
+    return;
+  }
+
+  preloading = true;
+  const queue = levelImages(name);
+  log('В фоне подгружаем', name + ':', queue.length, 'картинок');
+
+  // По одной, а не все разом: браузер держит на сайт всего несколько
+  // соединений, и пачка фоновых картинок отняла бы их у того, что
+  // игрок видит прямо сейчас.
+  function step() {
+    const path = queue.shift();
+    if (!path) {
+      log('Фоновая загрузка закончена:', name);
+      return;
+    }
+    const img = new Image();
+    img.onload = img.onerror = step;   // упавшая картинка не рвёт очередь
+    img.src = path;
+  }
+
+  whenIdle(step);
+}
+
+// Начинаем, когда браузеру нечем заняться. requestIdleCallback есть
+// не везде — в телеграме на айфоне может не быть; тогда просто ждём
+// пару секунд, к этому времени экран уже нарисован.
+function whenIdle(fn) {
+  if (window.requestIdleCallback) requestIdleCallback(fn, { timeout: 3000 });
+  else setTimeout(fn, 2000);
 }
 
 function buildSlots() {

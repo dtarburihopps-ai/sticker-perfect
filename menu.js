@@ -165,6 +165,13 @@ function showMenu() {
   document.body.classList.add('in-menu');
   menu.hidden = false;
   log('Меню: открыто на странице', menuPage + 1, 'из', pageCount());
+
+  // Пока игрок смотрит на альбом, тихо тянем картинки того уровня,
+  // на который ведёт «Играть». Нажмёт — они уже в кеше браузера,
+  // и уровень откроется без ожидания.
+  window.addEventListener('load', function () {
+    preloadLevel(LEVEL_NAMES[openedCount() - 1]);
+  });
 }
 
 // --- Старт ---
