@@ -52,12 +52,8 @@ function introSeen() {
 }
 
 function introDone() {
-  try {
-    localStorage.setItem(INTRO_KEY, '1');
-    log('Вступление пройдено');
-  } catch (e) {
-    log('Вступление сохранить не вышло — хранилище недоступно');
-  }
+  remember(INTRO_KEY, '1');
+  log('Вступление пройдено');
 }
 
 function openedCount() {
@@ -77,12 +73,91 @@ function unlockAfter(name) {
   const opened = Math.min(LEVEL_NAMES.indexOf(name) + 2, LEVEL_NAMES.length);
   if (opened <= openedCount()) return;
 
+  remember(PROGRESS_KEY, String(opened));
+  log('Открыт уровень:', LEVEL_NAMES[opened - 1]);
+}
+
+// --- Облачная страховка ---
+//
+// Хранилище браузера привязано к адресу игры, и это его беда: игрок
+// чистит данные телеграма, переустанавливает его, заходит с другого
+// телефона — прогресс исчезает. И переезд игры на другой адрес обнулил
+// бы его сразу у всех: для браузера это другой сайт.
+//
+// У мини-аппа есть своё хранилище, привязанное не к адресу, а к аккаунту
+// игрока. Оно переживает всё перечисленное. Но отвечает не сразу — ходит
+// в сеть, — поэтому главным остаётся местное: меню открывается мгновенно
+// по нему, а облако тихо догоняет и добавляет, если у него больше.
+//
+// Спрашиваем телеграм заново при каждом обращении, а не запоминаем один
+// раз при загрузке: свои возможности он досылает не мгновенно.
+function cloudStorage() {
+  const app = window.Telegram && window.Telegram.WebApp;
+
+  // Обычный браузер: тот же объект существует, но платформа неизвестна
+  if (!app || !app.platform || app.platform === 'unknown') return null;
+
+  // Хранилище появилось не в первых версиях мини-аппов
+  if (app.isVersionAtLeast && !app.isVersionAtLeast('6.9')) return null;
+
+  return app.CloudStorage || null;
+}
+
+// Записать и туда, и туда. Местное — чтобы в следующий раз открылось
+// мгновенно, облачное — чтобы пережило чистку данных.
+function remember(key, value) {
   try {
-    localStorage.setItem(PROGRESS_KEY, String(opened));
-    log('Открыт уровень:', LEVEL_NAMES[opened - 1]);
+    localStorage.setItem(key, value);
   } catch (e) {
-    log('Прогресс сохранить не вышло — хранилище недоступно');
+    log('Хранилище недоступно, запомнили только в облаке:', key);
   }
+
+  const cloud = cloudStorage();
+  if (!cloud) return;
+
+  cloud.setItem(key, value, function (error) {
+    if (error) log('Облако не приняло', key + ':', error);
+  });
+}
+
+// Спросить облако и подтянуть прошлое, если местное потерялось.
+//
+// Прогресс умеет только расти, поэтому спорить не о чем: берём большее
+// из двух. done вызывается, только когда что-то правда изменилось, —
+// меню по нему перерисуется, и открытые уровни появятся на глазах.
+function restoreProgress(done) {
+  const cloud = cloudStorage();
+  if (!cloud) return;
+
+  cloud.getItem(PROGRESS_KEY, function (error, value) {
+    if (error) return log('Облако не ответило про прогресс:', error);
+
+    const opened = parseInt(value, 10);
+    if (!opened || opened <= openedCount()) return;
+
+    try {
+      localStorage.setItem(PROGRESS_KEY, String(opened));
+    } catch (e) {
+      // Хранилище запрещено — покажем хотя бы в этот заход
+    }
+
+    log('Облако вернуло прогресс:', opened);
+    done();
+  });
+
+  // Вступление тоже помним, но в него не вмешиваемся на ходу: если игрок
+  // прямо сейчас его смотрит, дёргать экран нельзя. Просто отмечаем,
+  // чтобы в следующий раз не показывать заново.
+  cloud.getItem(INTRO_KEY, function (error, value) {
+    if (error || value !== '1' || introSeen()) return;
+
+    try {
+      localStorage.setItem(INTRO_KEY, '1');
+      log('Облако помнит, что вступление уже видели');
+    } catch (e) {
+      // и ладно
+    }
+  });
 }
 
 // --- Переходы между экранами ---
