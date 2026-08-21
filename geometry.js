@@ -16,7 +16,7 @@ function slotRect(slot) {
   // Обычно размер места берётся у продукта, который сюда идёт. В коробке
   // продукт заранее не известен — подойдёт любой карандаш, и все они
   // одного размера, поэтому уровень задаёт его один раз в slotSize.
-  const kind = slot.sticker ? level.stickers[slot.sticker] : level.slotSize;
+  const kind = slot.sticker ? state.level.stickers[slot.sticker] : state.level.slotSize;
 
   const width = kind.width * box.width;
   const height = kind.height * box.height;
@@ -42,7 +42,7 @@ function slotAt(x, y, type) {
   let best = null;
   let bestDistance = Infinity;
 
-  slots.forEach(function (slot) {
+  state.slots.forEach(function (slot) {
     if (type && slot.sticker !== type) return;
 
     const rect = slotRect(slot);
@@ -58,7 +58,7 @@ function slotAt(x, y, type) {
     // В коробке с карандашами наоборот: места не накладываются, стоят в ряд,
     // а тап по занятому — это обмен, обычное действие. Со штрафом игрок
     // целился бы в один карандаш, а менялся бы соседний свободный.
-    const penalty = (slot.filled && !anySlot) ? 1e9 : 0;
+    const penalty = (slot.filled && !anySlot()) ? 1e9 : 0;
 
     if (distance + penalty < bestDistance) {
       bestDistance = distance + penalty;
@@ -246,7 +246,7 @@ function layoutBackground() {
 function layoutDecor() {
   const box = backgroundBox();
 
-  decor.forEach(function (item) {
+  state.decor.forEach(function (item) {
     const width = item.width * box.width;
     const height = item.element.naturalHeight
       ? width * item.element.naturalHeight / item.element.naturalWidth
@@ -261,7 +261,7 @@ function layoutDecor() {
 function layoutOverlays() {
   const box = backgroundBox();
 
-  overlays.forEach(function (overlay) {
+  state.overlays.forEach(function (overlay) {
     overlay.element.style.left = (scene.offsetLeft + box.left + overlay.x * box.width) + 'px';
     overlay.element.style.top = (scene.offsetTop + box.top + overlay.y * box.height) + 'px';
     overlay.element.style.width = (overlay.width * box.width) + 'px';
@@ -276,9 +276,9 @@ function layoutOverlays() {
 function layoutSlots() {
   const box = backgroundBox();
 
-  slots.forEach(function (slot) {
+  state.slots.forEach(function (slot) {
     if (slot.outline) {
-      const kind = level.stickers[slot.sticker];
+      const kind = state.level.stickers[slot.sticker];
       const width = kind.width * box.width;
       const height = kind.height * box.height;
 
@@ -292,7 +292,7 @@ function layoutSlots() {
       // Место последней наклейки прячем до самого её прихода: увидев
       // лишний контур сразу, игрок решит, что чего-то недодали, и будет
       // искать шестую наклейку в пустой полосе.
-      slot.outline.hidden = slot.filled || (slot.last && !finalGiven);
+      slot.outline.hidden = slot.filled || (slot.last && !state.finalGiven);
     }
 
     if (!SHOW_SLOTS) return;
@@ -306,20 +306,20 @@ function layoutSlots() {
 }
 
 function layoutStickers() {
-  const waiting = stickers.filter(function (s) { return !s.placed; });
+  const waiting = state.stickers.filter(function (s) { return !s.placed; });
 
   // Если хвост очереди укоротился, подтягиваем окно назад,
   // иначе полоса окажется пустой при непустой очереди
-  trayOffset = Math.min(trayOffset, Math.max(0, waiting.length - trayVisible));
+  state.trayOffset = Math.min(state.trayOffset, Math.max(0, waiting.length - state.trayVisible));
 
-  const visible = waiting.slice(trayOffset, trayOffset + trayVisible);
+  const visible = waiting.slice(state.trayOffset, state.trayOffset + state.trayVisible);
   const places = trayLayout(visible);
 
   // Стрелка есть только тогда, когда ей есть что сделать
-  prevButton.hidden = trayOffset === 0;
-  nextButton.hidden = trayOffset + trayVisible >= waiting.length;
+  prevButton.hidden = state.trayOffset === 0;
+  nextButton.hidden = state.trayOffset + state.trayVisible >= waiting.length;
 
-  stickers.forEach(function (sticker) {
+  state.stickers.forEach(function (sticker) {
     if (sticker.placed) {
       const size = stickerSize(sticker);
       sticker.element.style.display = '';
@@ -397,7 +397,7 @@ function overlap(a, b) {
 
 // Магнит целиком внутри области: ткнула у самого края — подвинется внутрь
 function insideArea(left, top, size) {
-  const rect = partRect(level.area);
+  const rect = partRect(state.level.area);
 
   return {
     left: Math.min(Math.max(left, rect.left), rect.right - size.width),
@@ -409,19 +409,19 @@ function insideArea(left, top, size) {
 // рядом, а не впритык, и стена магнитов не выглядит слипшейся.
 function spotFree(sticker, left, top, size) {
   const box = backgroundBox();
-  const gap = (level.gap || 0) * box.width;
+  const gap = (state.level.gap || 0) * box.width;
 
   const rect = {
     left: left - gap, top: top - gap,
     right: left + size.width + gap, bottom: top + size.height + gap
   };
 
-  const onHole = (level.holes || []).some(function (hole) {
+  const onHole = (state.level.holes || []).some(function (hole) {
     return overlap(rect, partRect(hole));
   });
   if (onHole) return false;
 
-  return !stickers.some(function (other) {
+  return !state.stickers.some(function (other) {
     return other !== sticker && other.spot && overlap(rect, spotRect(other));
   });
 }

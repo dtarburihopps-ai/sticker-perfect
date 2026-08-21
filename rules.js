@@ -6,8 +6,36 @@
 // Новое правило добавляется проверкой сюда, а не ещё одним «если» посреди
 // кода — иначе с каждым уровнем правила расползались бы всё шире.
 
+// --- Какого устройства уровень ---
+//
+// В холодильнике места посчитаны заранее и каждое ждёт свой продукт;
+// на дверце мест нет вообще; в коробке с карандашами и в ящике
+// с пуговицами места принимают любой стикер, а правильность проверяется
+// в конце — порядком или признаком.
+//
+// Раньше это были четыре переменные, которые выставлялись при загрузке
+// уровня и дальше жили сами по себе. Теперь устройство спрашивается
+// у самих данных: разойтись с ними стало нечему.
+function isFree() {
+  return state.level.mode === 'free';
+}
+
+function isOrder() {
+  return state.level.mode === 'order';
+}
+
+function isGroups() {
+  return state.level.mode === 'groups';
+}
+
+// В этих двух устройствах место принимает любой стикер, а правильность
+// проверяется только в конце: порядок в ряду или признак в отсеке.
+function anySlot() {
+  return isOrder() || isGroups();
+}
+
 function slotById(id) {
-  return slots.filter(function (s) { return s.id === id; })[0];
+  return state.slots.filter(function (s) { return s.id === id; })[0];
 }
 
 // ВСЕ правила игры собраны здесь, в одном месте.
@@ -19,7 +47,7 @@ function whyNot(sticker, slot) {
   // В коробке с карандашами запретов нет вообще: любой карандаш
   // встаёт в любое место. Правильным считается только порядок,
   // и проверяет его конец уровня, а не это место.
-  if (anySlot) return null;
+  if (anySlot()) return null;
 
   if (slot.filled) return 'место занято';
 
@@ -44,12 +72,12 @@ function whyNot(sticker, slot) {
 
 // Кто лежит на этом месте
 function stickerIn(slot) {
-  return stickers.filter(function (s) { return s.placed && s.slot === slot; })[0];
+  return state.stickers.filter(function (s) { return s.placed && s.slot === slot; })[0];
 }
 
 // Что лежит в этой группе мест (например, на левой тарелке)
 function occupiedBy(group) {
-  const taken = slots.filter(function (s) {
+  const taken = state.slots.filter(function (s) {
     return s.group === group && s.filled;
   })[0];
 
@@ -58,7 +86,7 @@ function occupiedBy(group) {
 
 // В какой группе уже лежит этот продукт
 function groupOf(type) {
-  const taken = slots.filter(function (s) {
+  const taken = state.slots.filter(function (s) {
     return s.group && s.filled && s.sticker === type;
   })[0];
 
@@ -70,18 +98,18 @@ function groupOf(type) {
 // Считаем именно стикеры, а не занятые места: часть мест остаётся пустой
 // нарочно — например, на второй тарелке, куда арбуз так и не пошёл.
 function checkFinished() {
-  if (finished) return;
-  if (stickers.some(function (s) { return !s.placed; })) return;
+  if (state.finished) return;
+  if (state.stickers.some(function (s) { return !s.placed; })) return;
 
   // В коробке мало разложить всё — надо разложить правильно. Пока порядок
   // не тот, игра молчит: кот не пришёл, значит ещё не то. Никаких «неверно»
   // тут нет нарочно, игрок должен догадаться сам.
-  if (ordered && !inOrder()) {
+  if (isOrder() && !inOrder()) {
     log('Всё в коробке, но не по порядку');
     return;
   }
 
-  if (grouped && !inGroups()) {
+  if (isGroups() && !inGroups()) {
     log('Всё в ящике, но отсеки собраны не по признаку');
     return;
   }
@@ -92,29 +120,29 @@ function checkFinished() {
   // Смотрим не на флаг, а на саму наклейку: пока её нет на экране,
   // уровень не собран, даже если проверка придёт сюда второй раз —
   // а она приходит, пока название летит в полосу.
-  if (level.final && !stickers.some(function (s) { return s.type === level.final; })) {
-    if (!finalGiven) {
-      finalGiven = true;
+  if (state.level.final && !state.stickers.some(function (s) { return s.type === state.level.final; })) {
+    if (!state.finalGiven) {
+      state.finalGiven = true;
       log('Обложка разложена, несём название');
-      setTimeout(giveFinal, level.finalDelay || FINAL_DELAY);
+      setTimeout(giveFinal, state.level.finalDelay || FINAL_DELAY);
     }
     return;
   }
 
-  finished = true;
+  state.finished = true;
   log('Уровень собран');
 
   // Следующий уровень открывается сразу, ещё до прихода кота:
   // игрок может выйти в меню кнопкой, и уровень должен его там ждать.
   // Вступление в счёт не идёт — оно не уровень.
-  if (!level.intro) unlockAfter(levelName);
+  if (!state.level.intro) unlockAfter(state.name);
 
   // Небольшая пауза: пусть последний стикер успеет улечься,
   // а игрок — увидеть готовую картинку
   setTimeout(function () {
     // На вступлении кота нет: там финал и так про альбом, а второй
     // герой на экране только отвлекал бы от названия
-    if (level.mascot !== false) {
+    if (state.level.mascot !== false) {
       mascot.classList.add('show');
       log('Кот пришёл');
     }
@@ -123,8 +151,8 @@ function checkFinished() {
     // Если следующего уровня нет — стрелке некуда вести, и остаётся
     // только «в меню». На вступлении наоборот: там одна стрелка,
     // и ведёт она в альбом.
-    nextLevelButton.hidden = !level.intro && !nextLevelName(levelName);
-    toMenuButton.hidden = !!level.intro;
+    nextLevelButton.hidden = !state.level.intro && !nextLevelName(state.name);
+    toMenuButton.hidden = !!state.level.intro;
 
     finishPanel.hidden = false;
     // hidden сняли — даём браузеру мгновение, иначе он посчитает, что
@@ -134,18 +162,18 @@ function checkFinished() {
     setTimeout(function () {
       finishPanel.classList.add('show');
     }, 20);
-  }, level.mascotDelay || MASCOT_DELAY);
+  }, state.level.mascotDelay || MASCOT_DELAY);
 }
 
 // Последняя наклейка приходит в опустевшую полосу и мягко проявляется:
 // резкое появление на пустом месте выглядит как ошибка отрисовки.
 function giveFinal() {
-  const sticker = createSticker(level.final);
+  const sticker = createSticker(state.level.final);
   sticker.element.classList.add('arrive');
 
   // Место под название показываем в ту же секунду: наклейка и её контур
   // появляются вместе, и сразу видно, куда её нести
-  const spot = slots.filter(function (s) { return s.last; })[0];
+  const spot = state.slots.filter(function (s) { return s.last; })[0];
   if (spot && spot.outline) spot.outline.classList.add('arrive');
 
   layout();
@@ -162,7 +190,7 @@ function giveFinal() {
 // «везде один и тот же признак» не нужно.
 function inGroups() {
   const cells = {};
-  slots.forEach(function (slot) {
+  state.slots.forEach(function (slot) {
     (cells[slot.group] = cells[slot.group] || []).push(stickerIn(slot));
   });
 
@@ -180,7 +208,7 @@ function inGroups() {
 // к тёмному. Порядок мест берём по их координате, а не по тому, в каком
 // порядке они записаны в levels.js — на экране игрок видит именно левее-правее.
 function inOrder() {
-  const row = slots.slice().sort(function (a, b) { return a.x - b.x; });
+  const row = state.slots.slice().sort(function (a, b) { return a.x - b.x; });
 
   let previous = 0;
   for (let i = 0; i < row.length; i++) {
