@@ -181,14 +181,18 @@ def main():
                    if os.path.isfile(os.path.join(SRC, n)))
 
     old_total = new_total = 0
-    unknown = []
+    skipped = []
 
     for name in names:
         stem = os.path.splitext(name)[0]
         fraction = fractions.get(stem)
+
+        # Картинку, которой не пользуется ни один уровень, не переводим
+        # вовсе: иначе она уедет на сайт и будет лежать там мёртвым
+        # грузом. Появится уровень — появится и она, сама собой.
         if fraction is None:
-            fraction = 1.0                  # незнакомую картинку не трогаем в размере
-            unknown.append(name)
+            skipped.append(name)
+            continue
 
         old = os.path.getsize(os.path.join(SRC, name))
         out_name, new, w, h = convert(name, fraction, OUT)
@@ -205,8 +209,8 @@ def main():
 
     print("\nпревью уровней: %d шт." % len(backgrounds))
     print("заглушки: %d шт., blur.js весит %.0f КБ" % (count, blur / 1024.0))
-    if unknown:
-        print("не нашлись в levels.js (оставлены в полном размере): %s" % ", ".join(unknown))
+    if skipped:
+        print("пропущены — ни один уровень их не показывает: %s" % ", ".join(skipped))
     print("\nбыло %.1f МБ -> стало %.1f МБ (в %.1f раза легче)"
           % (old_total / 1048576.0, new_total / 1048576.0, old_total / float(new_total)))
 
