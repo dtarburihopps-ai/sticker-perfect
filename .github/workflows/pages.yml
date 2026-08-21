@@ -30,7 +30,8 @@ jobs:
       - name: Собрать папку для публикации
         run: |
           mkdir _site
-          cp index.html style.css log.js levels.js blur.js progress.js sound.js game.js menu.js _site/
+          cp index.html style.css log.js levels.js blur.js progress.js sound.js _site/
+          cp assets.js geometry.js rules.js game.js menu.js _site/
           cp -r web _site/
 
       - uses: actions/configure-pages@v5
