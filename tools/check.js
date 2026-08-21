@@ -120,7 +120,19 @@ names.forEach(function (name) {
   // --- Устройство уровня ---
 
   if (level.mode === 'free') {
-    if (!level.area) complain(name, 'уровень без мест, но не задана область area');
+    if (!level.area) {
+      complain(name, 'уровень без мест, но не задана область area');
+    } else {
+      // Область обязана вмещать самый крупный стикер. Если она меньше,
+      // игра не откажет игроку, а тихо положит стикер ЗА её пределами:
+      // поиск свободной точки прижимает его к краю и на этом успокаивается.
+      Object.keys(kinds).forEach(function (type) {
+        const kind = kinds[type];
+        if (kind.width > level.area.width || kind.height > level.area.height) {
+          complain(name, 'стикер «' + type + '» крупнее области area — он ляжет мимо неё');
+        }
+      });
+    }
   }
 
   if (level.mode === 'order') {
