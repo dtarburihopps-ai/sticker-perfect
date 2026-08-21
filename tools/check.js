@@ -170,8 +170,11 @@ names.forEach(function (name) {
   // Уровень без мест не считаем, там кладут куда угодно; уровень
   // с последней наклейкой тоже — она приходит сверх полосы.
 
-  if (level.mode !== 'free' && !level.final) {
-    const waiting = (level.tray || []).length;
+  if (level.mode !== 'free') {
+    // Последняя наклейка приходит в полосу сама, когда разложено всё
+    // остальное, и место под неё тоже своё — поэтому считаем её наравне,
+    // а не пропускаем весь уровень, как было раньше.
+    const waiting = (level.tray || []).length + (level.final ? 1 : 0);
     const room = slots.filter(function (slot) { return !slot.filled; }).length;
     if (waiting > room) {
       complain(name, 'стикеров ' + waiting + ', а свободных мест ' + room +
@@ -187,6 +190,15 @@ names.forEach(function (name) {
 // будет дырка. Заглушка проверяется заодно: она делается тем же скриптом.
 
 const used = new Set();
+
+// Картинки бывают не только в уровнях: кот, логотип и маскот подключены
+// прямо в разметке, разворот альбома — в стилях. Их тоже надо проверить,
+// иначе забытый прогон optimize.py заметит только игрок.
+(read('index.html') + read('style.css')).replace(/web\/[\w-]+\.webp/g, function (p) {
+  used.add(p);
+  return p;
+});
+
 names.forEach(function (name) {
   (JSON.stringify(all[name]).match(/web\/[\w-]+\.webp/g) || []).forEach(function (p) {
     used.add(p);

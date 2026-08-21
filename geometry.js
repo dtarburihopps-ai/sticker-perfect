@@ -86,12 +86,29 @@ function slotAt(x, y, type) {
 // место, а мест на уровне три десятка. Сбрасывается, когда меняется экран.
 let boxCache = null;
 
+// Пропорция картинки. Сначала спрашиваем саму картинку, а пока она
+// не пришла — берём числа из SIZE, их посчитал tools/optimize.py.
+//
+// Это не мелочь: без запасных чисел раскладка ждала бы загрузки, а до
+// раскладки ни у чего нет размеров — в том числе у заглушек, которые
+// как раз и должны закрывать собой это ожидание. Получалось, что
+// заглушка появлялась ровно тогда, когда была уже не нужна.
+function ratioOf(img, path) {
+  if (img && img.naturalWidth) return img.naturalWidth / img.naturalHeight;
+
+  const size = (typeof SIZE !== 'undefined') && SIZE[path];
+  return size ? size[0] / size[1] : 0;
+}
+
 function backgroundBox() {
   if (boxCache) return boxCache;
 
   const sceneW = scene.clientWidth;
   const sceneH = scene.clientHeight;
-  const ratio = background.naturalWidth / background.naturalHeight;
+  // Если пропорция неизвестна вовсе — считаем по сцене, лишь бы
+  // не делить на ноль. До layout() дело в таком случае доходить
+  // не должно: scheduleLayout ждёт именно её.
+  const ratio = ratioOf(background, state.level.background) || (sceneW / sceneH);
 
   let width = sceneW;
   let height = width / ratio;
@@ -214,7 +231,7 @@ function scheduleLayout(attempt) {
   attempt = typeof attempt === 'number' ? attempt : 0;
 
   setTimeout(function () {
-    if (scene.clientWidth && background.naturalWidth) {
+    if (scene.clientWidth && ratioOf(background, state.level.background)) {
       layout();
       return;
     }
@@ -242,7 +259,11 @@ function layout() {
 function layoutBackground() {
   const box = backgroundBox();
 
+  // Высоту задаём явно, а не оставляем картинке. У незагруженной
+  // картинки высота нулевая, и заглушке было бы негде показаться —
+  // а короб мы и так посчитали, число известно.
   background.style.width = box.width + 'px';
+  background.style.height = box.height + 'px';
   background.style.left = box.left + 'px';
   background.style.top = box.top + 'px';
 }
@@ -252,11 +273,15 @@ function layoutDecor() {
 
   state.decor.forEach(function (item) {
     const width = item.width * box.width;
-    const height = item.element.naturalHeight
-      ? width * item.element.naturalHeight / item.element.naturalWidth
-      : 0;
+
+    // Высота нужна, чтобы поставить вещь НА линию, а не свесить с неё.
+    // Раньше у незагруженной картинки высота считалась нулём, и тарелка
+    // до своей загрузки стояла на свою же высоту ниже полки.
+    const ratio = ratioOf(item.element, item.path);
+    const height = ratio ? width / ratio : 0;
 
     item.element.style.width = width + 'px';
+    if (height) item.element.style.height = height + 'px';
     item.element.style.left = (box.left + item.x * box.width) + 'px';
     item.element.style.top = (box.top + item.bottom * box.height - height) + 'px';
   });
@@ -266,9 +291,16 @@ function layoutOverlays() {
   const box = backgroundBox();
 
   state.overlays.forEach(function (overlay) {
+    const width = overlay.width * box.width;
+    const ratio = ratioOf(overlay.element, overlay.path);
+
     overlay.element.style.left = (scene.offsetLeft + box.left + overlay.x * box.width) + 'px';
     overlay.element.style.top = (scene.offsetTop + box.top + overlay.y * box.height) + 'px';
-    overlay.element.style.width = (overlay.width * box.width) + 'px';
+    overlay.element.style.width = width + 'px';
+
+    // Высоту задаём сами: у незагруженной картинки она нулевая,
+    // и заглушке негде было бы показаться
+    if (ratio) overlay.element.style.height = (width / ratio) + 'px';
   });
 }
 

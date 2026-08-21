@@ -1,8 +1,15 @@
-// Заглушки: та же картинка шириной 16 пикселей, вшитая прямо сюда.
-// Пока настоящая едет по сети, на её месте стоит мягкое пятно
-// нужного цвета и формы — экран не выглядит сломанным.
+// Заглушки и размеры картинок. Файл сделан tools/optimize.py,
+// руками не правим: перезапишется.
 //
-// Файл сделан tools/optimize.py. Руками не правим: перезапишется.
+// BLUR — та же картинка шириной 16 пикселей, вшитая прямо сюда.
+// Пока настоящая едет по сети, на её месте стоит мягкое пятно
+// нужного цвета и формы, и экран не выглядит сломанным.
+//
+// SIZE — сколько картинка на самом деле пикселей. Игре это нужно
+// ЗАРАНЕЕ: раскладка считает, где что лежит, из пропорций картинок,
+// и без этих чисел ей пришлось бы ждать, пока они догрузятся, —
+// а тогда и заглушку показать было бы негде.
+
 const BLUR = {
   'web/album.webp': 'data:image/webp;base64,UklGRngAAABXRUJQVlA4IGwAAAAQBACdASoQABkAPrVKnkmnJCKhMAgA4BaJZACdMoRwACmYwDu5BxsIAAD+YkDzoSUnpF4vgLcZzmNGHM69hnK4n2W+ot8GnjpafeNpMX7odEsFlXIinaQnjl2zmibtxeG9KIxF42D1fI8AAAA=',
   'web/bottle.webp': 'data:image/webp;base64,UklGRmgCAABXRUJQVlA4WAoAAAAQAAAADwAAKAAAQUxQSCIBAAABkGvb1rE9+33eP1b7VclfRZWTysYFmL36XIZt27aN2naVVB+ec9bP57mFiJgAqZCatz27tXGcCrUPYd8/gLhapaSggWBmNU51UGqyR8D8hVS0m4O1413Z0cxO3vQoCikUg2gfua4mSaUWEAH3v0MVFEK/bxiA82OAQqljGB02uNu11AIadNpggfr9cOvM/GmPxRiJxso9HlOinz5MkvHkaM7jB1jGw6yjxIyDWYeyDmftzXmyAku7vzwtsm0ynuI+s/IL78ypDtF5YkpjtM5kDNfpjGG6koIzrc9HLMFYNraBJ0TWzsVJOrLGY4pxZT6WEtnU/N88wZiqtVSjORBjjVdNofIBwAzg9zgVqqy9/roOfubkjv4KKiRp4tXrSyUpCFZQOCAgAQAAMAYAnQEqEAApAD61TqBMJyQjIiqoAOAWiWIAnTLjgPrAI8DWBObBbrUYkupLmRR4znY/phebjVRhwAD+9TNxmx35FOMo8DhFLCG28SU9mLHP+Rf9pJdZK9fnlUL3//Nu/yol9wv9/aLyjCj8w6z81Kdf+VKb7ajm0A9oqsM7pBbAajiC08FiElTf7+gW6YEsY0pZxpDpxYOj+zt+24ln20LYs5KL6ubaDj7XCqe9I3r/vj1xeZ4Rx55/W2Z9vYOFhc90b9Txy/WMVafW5vnMxLJmmhZ5XtE77+TeK/3saNjR8ST+xGbTUeDptXqa+8srf63wykx7fvfQVgg6QLN1J/G7fnFZcH7slgCZOUggpQLyv+6Ang/oqit5vAO4AAAA',
@@ -74,4 +81,77 @@ const BLUR = {
   'web/sticker-cocoa.webp': 'data:image/webp;base64,UklGRmABAABXRUJQVlA4WAoAAAAQAAAADwAADQAAQUxQSJYAAAABgFtt2/LkibtVvkL61AnQScsMMIU7JTO4dS5buHTulJ+9D/LlnyEiJgARNBZvtLqYKCEMIILBe3rPmggD6CetkGL4UA6HUX2hpVdzCRHM0dIv8lWKhO9EutBxADAMKO5tseCC/N99owQRww3abs5oeWyJEZ8lyWGM01khneXRyGgfIph29C6nAYQQRnvnxXyfDgGxaARWUDggpAAAANACAJ0BKhAADgACgEIlAE6P4QQAQMxbkcrcXPJG6AAA/vdeIy7GOsmjLCP171PptWKRMk7+Hb2loBdeYGaP0oao4nCmbFf7JbYiudRINjRHv+dqkOSf1/xmEopA4fqmqTb9kZ8tUSqgw8h4j3qbmqubNJJH2WuetuZ5xaT+e8iqFNqvRr7cL+vdinfsI2BN2F3yVA76DjIv6k/mkzDiLlG7AAAA',
   'web/sticker-plant.webp': 'data:image/webp;base64,UklGRmgBAABXRUJQVlA4WAoAAAAQAAAADwAADQAAQUxQSKIAAAABgGPb2rHnvvjdRb3NzlavUm1SpTImYA3FnoOtOpX5vs8N5xAREwBlrDU7p1FYrQEYABghdwIAlAJMSW3WnXxyqaQ4DzAde+QnSUdSVpNAek8h6UjhQf0iHYX/fpJpTyL8V9xjC7rp/nPshkrm/579CCB6Rf+H5y20spjlp/xy0qssLCb8O70T4WscFCw6yDf+3tUaUCq2OZ7V3tPcd18JAwBWUDggoAAAAHACAJ0BKhAADgACgEIlkAJ0Bp2uaXOW+4UDxgAA/vf1+ene0wpr+cW8/59JILiI9MpxepLufTjH+nC89KBfXNPYV+TP5pcPdRlKOyBvgD3z1/rfsLwqUGV1rTq9TcVaeROf2+2G3OjYvuCpQ5kRyv13Bj9p83u5+13H+3hyx6rGzxZlUaujR+7XOnjbn70xv6U5bLuIOLR/KZjOtx5eWAA=',
   'web/sticker-yarn.webp': 'data:image/webp;base64,UklGRjgBAABXRUJQVlA4WAoAAAAQAAAADwAACwAAQUxQSJIAAAABgFpt2/LmCZOKZ58RUMUzQ3GAui7Q0wmYwTFY9HXdgJkZPniCO0TEBBhg6D18+z0qwoh2o3uPHUdhbMMq/xWpBIdhApCkYLtSLy4YgGOqDpSsmmxmwyN1J8EVABDsKrmbmxg03mjdifwnOT9P0Y08+WLwnkKTSqo/boX5jMQnu556HCNxI0Kz578/B0OrYwEAAFZQOCCAAAAAkAIAnQEqEAAMAAKAQiWwAnQGnBZpepvUBVIyDAAA/vVfL82GAh27XxdroEGftuhdurLzFw0cyE4l+Cw72N/LUJ4LEq4tnL3M/Gs1kD9GgzlZVhW0taqRSjiX4P5D0WZ/Oa88bGoZ/poiY+2MedZKG/lbXyuiVKIzvG6kBNizgAA='
+};
+
+const SIZE = {
+  'web/album.webp': [900, 1399],
+  'web/bottle.webp': [124, 315],
+  'web/button-circle-coral.webp': [222, 222],
+  'web/button-circle-graphite.webp': [222, 222],
+  'web/button-circle-violet.webp': [222, 222],
+  'web/button-circle-yellow.webp': [222, 222],
+  'web/button-flower-coral.webp': [222, 222],
+  'web/button-flower-graphite.webp': [222, 222],
+  'web/button-flower-violet.webp': [222, 222],
+  'web/button-flower-yellow.webp': [222, 222],
+  'web/button-heart-coral.webp': [222, 222],
+  'web/button-heart-graphite.webp': [222, 222],
+  'web/button-heart-violet.webp': [222, 222],
+  'web/button-heart-yellow.webp': [222, 222],
+  'web/button-square-coral.webp': [222, 222],
+  'web/button-square-graphite.webp': [222, 222],
+  'web/button-square-violet.webp': [222, 222],
+  'web/button-square-yellow.webp': [222, 222],
+  'web/buttons-box.webp': [971, 1619],
+  'web/cat.webp': [840, 932],
+  'web/cola.webp': [136, 247],
+  'web/cover.webp': [900, 1700],
+  'web/door.webp': [860, 1362],
+  'web/drawers-front.webp': [583, 238],
+  'web/fridge.webp': [717, 1265],
+  'web/logo.webp': [700, 427],
+  'web/magnet-cat.webp': [184, 243],
+  'web/magnet-daisy.webp': [201, 222],
+  'web/magnet-egg.webp': [182, 246],
+  'web/magnet-heart.webp': [218, 206],
+  'web/magnet-mug.webp': [215, 208],
+  'web/magnet-photo.webp': [190, 236],
+  'web/magnet-plant.webp': [203, 221],
+  'web/magnet-star.webp': [208, 215],
+  'web/magnet-toast.webp': [196, 229],
+  'web/magnet-tulip.webp': [196, 228],
+  'web/mascot-menu.webp': [520, 455],
+  'web/melon-half.webp': [292, 243],
+  'web/melon-slice.webp': [201, 201],
+  'web/orange.webp': [127, 148],
+  'web/pencil-1.webp': [100, 785],
+  'web/pencil-10.webp': [100, 785],
+  'web/pencil-2.webp': [100, 785],
+  'web/pencil-3.webp': [100, 785],
+  'web/pencil-4.webp': [100, 785],
+  'web/pencil-5.webp': [100, 785],
+  'web/pencil-6.webp': [100, 785],
+  'web/pencil-7.webp': [100, 785],
+  'web/pencil-8.webp': [100, 785],
+  'web/pencil-9.webp': [100, 785],
+  'web/pencil-table.webp': [900, 1500],
+  'web/pepper.webp': [127, 162],
+  'web/pickle-1.webp': [272, 454],
+  'web/pickle-2.webp': [270, 454],
+  'web/pickle-3.webp': [269, 454],
+  'web/pickle-4.webp': [270, 454],
+  'web/pickle-5.webp': [268, 454],
+  'web/pickle-6.webp': [269, 454],
+  'web/plate.webp': [558, 147],
+  'web/spot-books.webp': [350, 400],
+  'web/spot-camera.webp': [400, 316],
+  'web/spot-cocoa.webp': [333, 284],
+  'web/spot-logo.webp': [700, 427],
+  'web/spot-plant.webp': [350, 311],
+  'web/spot-yarn.webp': [315, 228],
+  'web/sticker-books.webp': [350, 400],
+  'web/sticker-camera.webp': [400, 316],
+  'web/sticker-cocoa.webp': [333, 284],
+  'web/sticker-plant.webp': [350, 311],
+  'web/sticker-yarn.webp': [315, 228]
 };

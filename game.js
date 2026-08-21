@@ -334,9 +334,17 @@ function buildDecor() {
     withBlur(element, data.image);
     element.src = data.image;
     element.alt = '';
+
+    // Картинка могла прийти позже общей раскладки — тогда пересчитаем.
+    // Скобки обязательны: обработчику передают событие, а scheduleLayout
+    // ждёт номер попытки.
+    element.addEventListener('load', function () { scheduleLayout(); });
     decorLayer.appendChild(element);
 
-    state.decor.push({ x: data.x, bottom: data.bottom, width: data.width, element: element });
+    state.decor.push({
+      x: data.x, bottom: data.bottom, width: data.width,
+      path: data.image, element: element
+    });
   });
 }
 
@@ -352,9 +360,13 @@ function buildOverlays() {
     withBlur(element, data.image);
     element.src = data.image;
     element.alt = '';
+    element.addEventListener('load', function () { scheduleLayout(); });
     overlaysLayer.appendChild(element);
 
-    state.overlays.push({ x: data.x, y: data.y, width: data.width, element: element });
+    state.overlays.push({
+      x: data.x, y: data.y, width: data.width,
+      path: data.image, element: element
+    });
   });
 }
 

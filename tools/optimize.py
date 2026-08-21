@@ -110,6 +110,17 @@ def widths_from_levels():
     return result
 
 
+def paths_from_page():
+    """Картинки, подключённые прямо в разметке и стилях.
+
+    Кот, логотип, маскот меню, разворот альбома — их нет ни в одном
+    уровне, и без этого списка скрипт счёл бы их ненужными и молча
+    пропустил, а на сайте осталась бы дырка.
+    """
+    text = read("index.html") + read("style.css")
+    return set(re.findall(r"web/([\w-]+)\.webp", text))
+
+
 def convert(name, fraction, out_dir, limit=None):
     img = Image.open(os.path.join(SRC, name))
 
@@ -131,9 +142,11 @@ def convert(name, fraction, out_dir, limit=None):
 
 
 def write_blur(stems):
-    """Заглушки вшиваем прямо в код, а не кладём файлами: каждая весит
-    меньше, чем запрос за ней по сети."""
-    rows = []
+    """Заглушки и размеры вшиваем прямо в код, а не кладём файлами:
+    каждая заглушка весит меньше, чем запрос за ней по сети."""
+    blur_rows = []
+    size_rows = []
+
     for stem in sorted(stems):
         path = os.path.join(OUT, stem + ".webp")
         if not os.path.isfile(path):
@@ -146,22 +159,33 @@ def write_blur(stems):
         buf = io.BytesIO()
         tiny.save(buf, "WEBP", quality=BLUR_QUALITY, method=6)
         uri = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
-        rows.append("  'web/%s.webp': '%s'" % (stem, uri))
+
+        blur_rows.append("  'web/%s.webp': '%s'" % (stem, uri))
+        size_rows.append("  'web/%s.webp': [%d, %d]" % (stem, img.width, img.height))
 
     head = [
-        u"// Заглушки: та же картинка шириной 16 пикселей, вшитая прямо сюда.",
-        u"// Пока настоящая едет по сети, на её месте стоит мягкое пятно",
-        u"// нужного цвета и формы — экран не выглядит сломанным.",
+        u"// Заглушки и размеры картинок. Файл сделан tools/optimize.py,",
+        u"// руками не правим: перезапишется.",
         u"//",
-        u"// Файл сделан tools/optimize.py. Руками не правим: перезапишется.",
+        u"// BLUR — та же картинка шириной 16 пикселей, вшитая прямо сюда.",
+        u"// Пока настоящая едет по сети, на её месте стоит мягкое пятно",
+        u"// нужного цвета и формы, и экран не выглядит сломанным.",
+        u"//",
+        u"// SIZE — сколько картинка на самом деле пикселей. Игре это нужно",
+        u"// ЗАРАНЕЕ: раскладка считает, где что лежит, из пропорций картинок,",
+        u"// и без этих чисел ей пришлось бы ждать, пока они догрузятся, —",
+        u"// а тогда и заглушку показать было бы негде.",
+        u"",
         u"const BLUR = {",
     ]
-    text = u"\n".join(head) + u"\n" + u",\n".join(rows) + u"\n};\n"
+
+    text = (u"\n".join(head) + u"\n" + u",\n".join(blur_rows) + u"\n};\n\n" +
+            u"const SIZE = {\n" + u",\n".join(size_rows) + u"\n};\n")
 
     out = os.path.join(BASE, "blur.js")
     with io.open(out, "w", encoding="utf-8") as f:
         f.write(text)
-    return os.path.getsize(out), len(rows)
+    return os.path.getsize(out), len(blur_rows)
 
 
 def main():
@@ -170,9 +194,15 @@ def main():
     if not os.path.isdir(PREVIEW):
         os.makedirs(PREVIEW)
 
+    # Нужным считается то, что показывает хоть один уровень или сама
+    # страница. Для картинок страницы размер брать неоткуда, поэтому
+    # они идут в полном размере — если он не назван в OVERRIDES.
     fractions = widths_from_levels()
-    used = set(fractions.keys())          # то, что уровни правда показывают
+    for stem in paths_from_page():
+        fractions.setdefault(stem, 1.0)
     fractions.update(OVERRIDES)
+
+    used = set(fractions.keys())
 
     # Фоны уровней — из них же делаем превью для карточек в меню
     backgrounds = re.findall(r"background:\s*'web/([\w-]+)\.webp'", read("levels.js"))
@@ -205,7 +235,7 @@ def main():
             convert(name, 1.0, PREVIEW, limit=PREVIEW_WIDTH)
 
     # Заглушки нужны и картинкам меню: кот с логотипом тоже ждут своей сети
-    blur, count = write_blur(used | set(OVERRIDES.keys()))
+    blur, count = write_blur(used)
 
     print("\nпревью уровней: %d шт." % len(backgrounds))
     print("заглушки: %d шт., blur.js весит %.0f КБ" % (count, blur / 1024.0))
