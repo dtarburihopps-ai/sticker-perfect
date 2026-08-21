@@ -1,14 +1,7 @@
 // Sticker Perfect — игра
 
-// Поставь false перед показом, чтобы убрать отладочные сообщения из консоли
-const DEBUG = true;
-
 // Показать границы мест, куда можно класть. Помогает целиться при настройке.
 const SHOW_SLOTS = false;
-
-function log() {
-  if (DEBUG) console.log.apply(console, arguments);
-}
 
 // Тайминги живут в style.css рядом с самими анимациями — там их и правим.
 // Код читает их оттуда, чтобы одно и то же время не пришлось держать
@@ -86,12 +79,8 @@ const finishPanel = document.getElementById('finish');
 const toMenuButton = document.getElementById('to-menu');
 const backButton = document.getElementById('back-to-menu');
 
-// Выход в меню — это адрес без ?level=. Страница перезагружается,
-// и уровень начинается заново, если игрок вернётся в него снова.
-function goToMenu() {
-  location.href = location.pathname;
-}
-
+// Выход в меню. Сам переход живёт в progress.js — там же, где все
+// остальные переходы между экранами.
 backButton.addEventListener('click', goToMenu);
 toMenuButton.addEventListener('click', goToMenu);
 
@@ -195,7 +184,7 @@ function loadLevel(name) {
   // Ждём события load — оно случается, когда всё нужное ЭТОМУ уровню
   // уже пришло: отбирать у него сеть нельзя.
   window.addEventListener('load', function () {
-    preloadLevel(nextLevelName());
+    preloadLevel(nextLevelName(levelName));
   });
 }
 
@@ -1182,7 +1171,7 @@ function checkFinished() {
     // Если следующего уровня нет — стрелке некуда вести, и остаётся
     // только «в меню». На вступлении наоборот: там одна стрелка,
     // и ведёт она в альбом.
-    nextLevelButton.hidden = !level.intro && !nextLevelName();
+    nextLevelButton.hidden = !level.intro && !nextLevelName(levelName);
     toMenuButton.hidden = !!level.intro;
 
     finishPanel.hidden = false;
@@ -1252,14 +1241,6 @@ function inOrder() {
   return true;
 }
 
-// Следующий уровень — просто следующий по порядку в LEVELS.
-// Отдельного списка не заводим: порядок уже задан тем, как уровни
-// написаны в levels.js, и держать его в двух местах незачем.
-function nextLevelName() {
-  const names = Object.keys(LEVELS);
-  return names[names.indexOf(levelName) + 1] || null;
-}
-
 // Переход адресом, с перезагрузкой страницы. Так уровень начинается
 // с чистого листа: не надо руками разбирать предыдущий.
 nextLevelButton.addEventListener('click', function () {
@@ -1270,11 +1251,11 @@ nextLevelButton.addEventListener('click', function () {
     return;
   }
 
-  const next = nextLevelName();
+  const next = nextLevelName(levelName);
   if (!next) return;
 
   log('Идём дальше:', next);
-  location.search = '?level=' + next;
+  openLevel(next);
 });
 
 // Мягкое «не туда»: стикер дрогнул, выбор НЕ снимается.
@@ -1303,9 +1284,10 @@ function feedbackSnap() {
   }
 }
 
-// Что открыть при запуске — меню или уровень — решает menu.js:
-// он знает про прогресс. Уровень по-прежнему можно открыть адресом,
-// ?level=fridge, это удобно при настройке.
+// Что открыть при запуске — меню или уровень — решает menu.js,
+// а порядок уровней и прогресс живут в progress.js. Уровень
+// по-прежнему можно открыть адресом, ?level=fridge, это удобно
+// при настройке.
 
 window.addEventListener('resize', function () {
   boxCache = null;

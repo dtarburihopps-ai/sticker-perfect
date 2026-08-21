@@ -1,86 +1,16 @@
-// Sticker Perfect — меню и прогресс
+// Sticker Perfect — меню
 //
 // Меню — это раскрытый альбом. Слева кнопка «Играть», справа страница
 // с наклейками-уровнями. Уровни открываются по очереди: пройден один —
 // открылся следующий.
 //
-// Отдельного экрана-роутера в игре нет и не надо: меню показывается,
-// когда в адресе нет ?level=, а уровень — когда он есть. Переход туда
-// и обратно — обычная перезагрузка страницы. Так уровень всегда
-// начинается с чистого листа, и разбирать предыдущий не приходится.
-
-// Порядок уровней задан порядком записей в levels.js — второго списка
-// не заводим, иначе однажды забудем поправить один из двух.
-//
-// Вступление в этот список не входит: оно не уровень, в альбоме
-// не показывается и играется один раз.
-const LEVEL_NAMES = Object.keys(LEVELS).filter(function (name) {
-  return !LEVELS[name].intro;
-});
-
-const INTRO_NAME = Object.keys(LEVELS).find(function (name) {
-  return LEVELS[name].intro;
-}) || null;
+// Здесь только рисование альбома. Какие уровни есть, какие открыты
+// и как на них попасть — это знает progress.js.
 
 // Сколько наклеек помещается на страницу альбома. Больше не влезает:
 // две колонки по три ряда — и наклейка ещё достаточно крупная, чтобы
 // узнать уровень в лицо.
 const PER_PAGE = 6;
-
-// --- Прогресс ---
-//
-// Храним одно число: сколько уровней открыто. Уровни идут строго по
-// очереди, поэтому списка не нужно — «открыто 3» значит открыты первый,
-// второй и третий.
-//
-// localStorage живёт в браузере: закрыла игру — прогресс остался.
-// В телеграме у мини-аппа свой браузер, но ведёт себя так же.
-const PROGRESS_KEY = 'sticker-perfect-open';
-const INTRO_KEY = 'sticker-perfect-intro';
-
-// Вступление показывается один раз: во второй запуск игрок хочет играть,
-// а не смотреть, как открывается альбом.
-function introSeen() {
-  try {
-    return localStorage.getItem(INTRO_KEY) === '1';
-  } catch (e) {
-    return false;
-  }
-}
-
-function introDone() {
-  try {
-    localStorage.setItem(INTRO_KEY, '1');
-    log('Вступление пройдено');
-  } catch (e) {
-    log('Вступление сохранить не вышло — хранилище недоступно');
-  }
-}
-
-function openedCount() {
-  // Первый уровень открыт всегда, иначе играть было бы не во что
-  try {
-    return Math.min(Math.max(1, parseInt(localStorage.getItem(PROGRESS_KEY), 10) || 1),
-                    LEVEL_NAMES.length);
-  } catch (e) {
-    // Приватный режим и запрет хранилища: играем без памяти, но играем
-    return 1;
-  }
-}
-
-// Уровень пройден — открываем следующий. Если он и так был открыт
-// (игрок переигрывает старое), ничего не меняем.
-function unlockAfter(name) {
-  const opened = Math.min(LEVEL_NAMES.indexOf(name) + 2, LEVEL_NAMES.length);
-  if (opened <= openedCount()) return;
-
-  try {
-    localStorage.setItem(PROGRESS_KEY, String(opened));
-    log('Открыт уровень:', LEVEL_NAMES[opened - 1]);
-  } catch (e) {
-    log('Прогресс сохранить не вышло — хранилище недоступно');
-  }
-}
 
 // --- Экран меню ---
 
@@ -96,10 +26,6 @@ let menuPage = 0;
 
 function pageCount() {
   return Math.ceil(LEVEL_NAMES.length / PER_PAGE);
-}
-
-function openLevel(name) {
-  location.search = '?level=' + name;
 }
 
 function drawMenu() {
