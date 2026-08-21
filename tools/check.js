@@ -21,10 +21,20 @@ function read(name) {
   return fs.readFileSync(path.join(ROOT, name), 'utf8');
 }
 
-// levels.js — обычный файл с одним объявлением. Выполняем его и забираем
-// объект: так мы читаем ровно то же, что прочитает браузер.
-const LEVELS = new Function(read('levels.js') + '\n; return LEVELS;')();
+// levels.js — обычный файл с объявлениями. Выполняем его и забираем
+// объекты: так мы читаем ровно то же, что прочитает браузер.
+const data = new Function(read('levels.js') +
+  '\n; return { LEVELS: LEVELS, INTRO: INTRO, INTRO_NAME: INTRO_NAME };')();
 const BLUR = new Function(read('blur.js') + '\n; return BLUR;')();
+
+const LEVELS = data.LEVELS;
+
+// Вступление лежит отдельно от уровней, но устроено так же и проверяется
+// наравне с ними: ошибиться в нём можно ровно теми же способами.
+const all = Object.assign({}, LEVELS);
+all[data.INTRO_NAME] = data.INTRO;
+
+const names = Object.keys(all);
 
 const problems = [];
 
@@ -32,29 +42,10 @@ function complain(where, what) {
   problems.push(where + ': ' + what);
 }
 
-// --- Порядок уровней ---
-//
-// Вступление обязано стоять первым. По списку уровней считаются сразу две
-// вещи — какой уровень следующий и сколько уровней пройдено, — и вторая
-// считается без вступления. Стоит ему оказаться в середине, и «дальше»
-// поведёт не туда, причём молча.
-
-const names = Object.keys(LEVELS);
-const intros = names.filter(function (name) { return LEVELS[name].intro; });
-
-if (intros.length > 1) {
-  complain('порядок уровней', 'вступлений несколько: ' + intros.join(', '));
-}
-if (intros.length === 1 && names[0] !== intros[0]) {
-  complain('порядок уровней',
-    'вступление «' + intros[0] + '» стоит не первым, а ' + (names.indexOf(intros[0]) + 1) +
-    '-м. Прогресс из-за этого съедет на уровень');
-}
-
 // --- Каждый уровень по отдельности ---
 
 names.forEach(function (name) {
-  const level = LEVELS[name];
+  const level = all[name];
   const kinds = level.stickers || {};
   const slots = level.slots || [];
 
@@ -197,7 +188,7 @@ names.forEach(function (name) {
 
 const used = new Set();
 names.forEach(function (name) {
-  (JSON.stringify(LEVELS[name]).match(/web\/[\w-]+\.webp/g) || []).forEach(function (p) {
+  (JSON.stringify(all[name]).match(/web\/[\w-]+\.webp/g) || []).forEach(function (p) {
     used.add(p);
   });
 });
@@ -210,10 +201,10 @@ used.forEach(function (file) {
   }
 });
 
-// Превью для карточек в меню
-names.forEach(function (name) {
+// Превью для карточек в меню. Вступления в альбоме нет — ему не нужно.
+Object.keys(LEVELS).forEach(function (name) {
   const level = LEVELS[name];
-  if (level.intro || !level.background) return;
+  if (!level.background) return;
 
   const preview = level.background.replace('web/', 'web/preview/');
   if (!fs.existsSync(path.join(ROOT, preview))) {
@@ -229,5 +220,5 @@ if (problems.length) {
   process.exit(1);
 }
 
-console.log('Сверка данных: всё сходится (' + names.length + ' уровней, ' +
-            used.size + ' картинок)');
+console.log('Сверка данных: всё сходится (' + Object.keys(LEVELS).length +
+            ' уровней и вступление, ' + used.size + ' картинок)');

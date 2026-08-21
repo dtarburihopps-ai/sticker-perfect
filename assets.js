@@ -14,7 +14,7 @@
 // откроется мгновенно — сколько бы он ни весил.
 
 function levelImages(name) {
-  const data = LEVELS[name];
+  const data = levelByName(name);
   if (!data) return [];
 
   // Пути к картинкам разбросаны по всей записи уровня: фон, стикеры,

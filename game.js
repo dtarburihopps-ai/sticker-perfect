@@ -134,7 +134,7 @@ vibrationButton.addEventListener('click', function () {
 // написано в самих данных уровня, и спрашивается у них — см. rules.js.
 const state = {
   level: null,      // описание уровня из levels.js
-  name: '',         // как уровень называется в LEVELS
+  name: '',         // как уровень называется: имя из LEVELS или INTRO_NAME
 
   slots: [],        // места на сцене
   stickers: [],     // все стикеры: и затравки, и те, что кладёт игрок
@@ -166,7 +166,7 @@ function scrollTray(step) {
 }
 
 function loadLevel(name) {
-  state.level = LEVELS[name];
+  state.level = levelByName(name);
   state.name = name;
 
   // Классом на экране пользуется таблица стилей: там, где стикер можно
@@ -175,7 +175,7 @@ function loadLevel(name) {
 
   // Вступление ведёт себя иначе: уходить с него некуда — это первый
   // экран игры, — а его стрелка в конце открывает меню
-  app.classList.toggle('intro', !!state.level.intro);
+  app.classList.toggle('intro', isIntro());
 
   // Полоса внизу подстраивается под уровень: карандаши длинные и узкие,
   // при обычной высоте восемь штук ужимаются в ниточки, в которые не попасть.
@@ -557,7 +557,7 @@ function dropHere(x, y) {
 // с чистого листа: не надо руками разбирать предыдущий.
 nextLevelButton.addEventListener('click', function () {
   // Вступление пройдено — больше его не показываем, уходим в альбом
-  if (state.level.intro) {
+  if (isIntro()) {
     introDone();
     goToMenu();
     return;

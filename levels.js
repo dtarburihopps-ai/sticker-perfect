@@ -3,6 +3,10 @@
 // Уровень — это ДАННЫЕ, а не код. Движок в game.js читает описание
 // и строит сцену сам. Новый уровень = новая запись здесь.
 //
+// В файле два объявления. INTRO — вступление, оно не уровень и лежит
+// само по себе. LEVELS — уровни альбома, и порядок в нём определяет
+// и порядок прохождения, и порядок карточек в меню.
+//
 // Все координаты — доли от размера фоновой картинки, не пиксели:
 //   0 — левый (верхний) край фона, 1 — правый (нижний).
 // Поэтому уровень одинаково правильно ложится на любой экран.
@@ -39,52 +43,59 @@
 // Скрипт перевырезает картинки и печатает готовые строки для этого файла.
 // Хочешь подвинуть банки или добавить ряд — меняй константы там.
 
-const LEVELS = {
+// --- Вступление: обложка альбома ---
+//
+// Вступление, а не уровень: играется один раз, в меню не показывается
+// и в счёт пройденного не идёт. Его задача — за десять секунд, без
+// единого слова, объяснить, что тут делают: берут наклейку и кладут
+// на место.
+//
+// Поэтому оно и лежит ОТДЕЛЬНО от LEVELS, а не первой записью внутри.
+// Пока оно было там, список уровней приходилось держать в двух видах:
+// со вступлением — чтобы знать, что идёт следующим, и без него — чтобы
+// считать прогресс. Теперь список ровно один, а вступление спрашивают
+// по имени.
+//
+// Места нарочно видны: у каждого напечатан контур по форме своей
+// наклейки. Промахнуться некуда, и подсказывать словами не надо.
+//
+// Последняя наклейка — название игры. Она приходит в полосу сама,
+// когда разложены остальные, и её место ждёт над всеми: приклеил
+// название — альбом твой, дальше меню.
+//
+//     python tools/cover.py     обложка и координаты наклеек
+const INTRO_NAME = 'intro';
 
-  // --- Уровень 0: обложка альбома ---
-  //
-  // Вступление, а не уровень: играется один раз, в меню не показывается
-  // и в счёт пройденного не идёт. Его задача — за десять секунд, без
-  // единого слова, объяснить, что тут делают: берут наклейку и кладут
-  // на место.
-  //
-  // Места нарочно видны: у каждого напечатан контур по форме своей
-  // наклейки. Промахнуться некуда, и подсказывать словами не надо.
-  //
-  // Последняя наклейка — название игры. Она приходит в полосу сама,
-  // когда разложены остальные, и её место ждёт над всеми: приклеил
-  // название — альбом твой, дальше меню.
-  //
-  //     python tools/cover.py     обложка и координаты наклеек
-  intro: {
-    intro: true,             // не уровень, а вступление: см. menu.js
-    background: 'web/cover.webp',
-    wall: '#C98E52',         // стол по краям, пипеткой с картинки
-    mascot: false,           // кот сюда не приходит: финал и так про альбом
+const INTRO = {
+  background: 'web/cover.webp',
+  wall: '#C98E52',         // стол по краям, пипеткой с картинки
+  mascot: false,           // кот сюда не приходит: финал и так про альбом
 
-    stickers: {
-      camera: { image: 'web/sticker-camera.webp', width: 0.2765, height: 0.1156, spot: 'web/spot-camera.webp' },
-      books:  { image: 'web/sticker-books.webp', width: 0.2404, height: 0.1454, spot: 'web/spot-books.webp' },
-      cocoa:  { image: 'web/sticker-cocoa.webp', width: 0.2284, height: 0.1031, spot: 'web/spot-cocoa.webp' },
-      plant:  { image: 'web/sticker-plant.webp', width: 0.2404, height: 0.1130, spot: 'web/spot-plant.webp' },
-      yarn:   { image: 'web/sticker-yarn.webp', width: 0.2164, height: 0.0828, spot: 'web/spot-yarn.webp' },
-      logo:   { image: 'web/logo.webp', width: 0.4809, height: 0.1553, spot: 'web/spot-logo.webp' }
-    },
-
-    slots: [
-      { id: 'camera', sticker: 'camera', x: 0.2783, bottom: 0.3864 },
-      { id: 'books',  sticker: 'books',  x: 0.4887, bottom: 0.5277 },
-      { id: 'cocoa',  sticker: 'cocoa',  x: 0.2844, bottom: 0.6244 },
-      { id: 'plant',  sticker: 'plant',  x: 0.5068, bottom: 0.7473 },
-      { id: 'yarn',   sticker: 'yarn',   x: 0.3324, bottom: 0.8501 },
-      { id: 'logo',   sticker: 'logo',   x: 0.2723, bottom: 0.2546, last: true }
-    ],
-
-    tray: ['camera', 'books', 'cocoa', 'plant', 'yarn'],
-
-    // Название приходит в полосу последним, когда остальное разложено
-    final: 'logo'
+  stickers: {
+    camera: { image: 'web/sticker-camera.webp', width: 0.2765, height: 0.1156, spot: 'web/spot-camera.webp' },
+    books:  { image: 'web/sticker-books.webp', width: 0.2404, height: 0.1454, spot: 'web/spot-books.webp' },
+    cocoa:  { image: 'web/sticker-cocoa.webp', width: 0.2284, height: 0.1031, spot: 'web/spot-cocoa.webp' },
+    plant:  { image: 'web/sticker-plant.webp', width: 0.2404, height: 0.1130, spot: 'web/spot-plant.webp' },
+    yarn:   { image: 'web/sticker-yarn.webp', width: 0.2164, height: 0.0828, spot: 'web/spot-yarn.webp' },
+    logo:   { image: 'web/logo.webp', width: 0.4809, height: 0.1553, spot: 'web/spot-logo.webp' }
   },
+
+  slots: [
+    { id: 'camera', sticker: 'camera', x: 0.2783, bottom: 0.3864 },
+    { id: 'books',  sticker: 'books',  x: 0.4887, bottom: 0.5277 },
+    { id: 'cocoa',  sticker: 'cocoa',  x: 0.2844, bottom: 0.6244 },
+    { id: 'plant',  sticker: 'plant',  x: 0.5068, bottom: 0.7473 },
+    { id: 'yarn',   sticker: 'yarn',   x: 0.3324, bottom: 0.8501 },
+    { id: 'logo',   sticker: 'logo',   x: 0.2723, bottom: 0.2546, last: true }
+  ],
+
+  tray: ['camera', 'books', 'cocoa', 'plant', 'yarn'],
+
+  // Название приходит в полосу последним, когда остальное разложено
+  final: 'logo'
+};
+
+const LEVELS = {
 
   // --- Уровень 1: магниты на закрытой дверце ---
   //

@@ -16,6 +16,12 @@
 // Раньше это были четыре переменные, которые выставлялись при загрузке
 // уровня и дальше жили сами по себе. Теперь устройство спрашивается
 // у самих данных: разойтись с ними стало нечему.
+// Вступление узнаётся по имени, а не по отметке внутри записи: отметка
+// была бы вторым источником правды рядом с тем, где запись лежит.
+function isIntro() {
+  return state.name === INTRO_NAME;
+}
+
 function isFree() {
   return state.level.mode === 'free';
 }
@@ -135,7 +141,7 @@ function checkFinished() {
   // Следующий уровень открывается сразу, ещё до прихода кота:
   // игрок может выйти в меню кнопкой, и уровень должен его там ждать.
   // Вступление в счёт не идёт — оно не уровень.
-  if (!state.level.intro) unlockAfter(state.name);
+  if (!isIntro()) unlockAfter(state.name);
 
   // Небольшая пауза: пусть последний стикер успеет улечься,
   // а игрок — увидеть готовую картинку
@@ -151,8 +157,8 @@ function checkFinished() {
     // Если следующего уровня нет — стрелке некуда вести, и остаётся
     // только «в меню». На вступлении наоборот: там одна стрелка,
     // и ведёт она в альбом.
-    nextLevelButton.hidden = !state.level.intro && !nextLevelName(state.name);
-    toMenuButton.hidden = !!state.level.intro;
+    nextLevelButton.hidden = !isIntro() && !nextLevelName(state.name);
+    toMenuButton.hidden = isIntro();
 
     finishPanel.hidden = false;
     // hidden сняли — даём браузеру мгновение, иначе он посчитает, что

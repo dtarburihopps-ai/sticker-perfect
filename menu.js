@@ -107,9 +107,9 @@ function showMenu() {
 // со старой версии игры, и пустой чёрный экран выглядел бы как поломка.
 const asked = new URLSearchParams(location.search).get('level');
 
-if (asked && LEVELS[asked]) {
+if (asked && levelByName(asked)) {
   loadLevel(asked);
-} else if (INTRO_NAME && !introSeen()) {
+} else if (!introSeen()) {
   // Самый первый запуск: игра начинается с закрытого альбома
   loadLevel(INTRO_NAME);
 } else {
