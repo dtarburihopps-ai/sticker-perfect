@@ -100,10 +100,18 @@ function unlockAfter(name) {
 //
 // Отдельного экрана-роутера в игре нет и не надо: меню показывается,
 // когда в адресе нет ?level=, а уровень — когда он есть.
+
+// Отладку тащим за собой: включила ?debug=1 один раз — и она держится
+// до конца прохождения, а не слетает на первом же переходе.
+function keepDebug(address) {
+  if (!DEBUG) return address;
+  return address + (address.indexOf('?') === -1 ? '?' : '&') + 'debug=1';
+}
+
 function openLevel(name) {
-  location.search = '?level=' + name;
+  location.search = keepDebug('?level=' + name);
 }
 
 function goToMenu() {
-  location.href = location.pathname;
+  location.href = keepDebug(location.pathname);
 }
