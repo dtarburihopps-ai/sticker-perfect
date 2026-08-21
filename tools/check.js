@@ -36,10 +36,23 @@ all[data.INTRO_NAME] = data.INTRO;
 
 const names = Object.keys(all);
 
+// Две разные вещи, и путать их не надо.
+//
+// problems — то, из-за чего игра сломается у игрока. На них публикация
+// останавливается: пусть лучше на сайте останется прошлая версия.
+//
+// notes — то, что просто выглядит забытым: лишняя запись, лишний файл.
+// Игру это не ломает, поэтому останавливать из-за такого выкладку глупо.
+// Скрипт про них говорит и идёт дальше, а мы смотрим, когда руки дойдут.
 const problems = [];
+const notes = [];
 
 function complain(where, what) {
   problems.push(where + ': ' + what);
+}
+
+function note(where, what) {
+  notes.push(where + ': ' + what);
 }
 
 // --- Каждый уровень по отдельности ---
@@ -116,6 +129,35 @@ names.forEach(function (name) {
   if (level.final && !kinds[level.final]) {
     complain(name, 'последняя наклейка «' + level.final + '» не описана');
   }
+
+  // Описан, но нигде не встречается. Скорее всего остался от переделки:
+  // стикер убрали из полосы, а описание забыли.
+  const inUse = {};
+  (level.tray || []).forEach(function (item) {
+    inUse[typeof item === 'string' ? item : item.type] = true;
+  });
+  (level.placed || []).forEach(function (item) { inUse[item.sticker] = true; });
+  slots.forEach(function (slot) { if (slot.sticker) inUse[slot.sticker] = true; });
+  if (level.final) inUse[level.final] = true;
+
+  Object.keys(kinds).forEach(function (type) {
+    if (!inUse[type]) note(name, 'стикер «' + type + '» описан, но нигде не используется');
+  });
+
+  // Одна картинка у двух разных стикеров — обычно копипаста: строку
+  // размножили, а путь поменять забыли. Игра покажет двух близнецов.
+  const byImage = {};
+  Object.keys(kinds).forEach(function (type) {
+    const image = kinds[type].image;
+    if (!image) return;
+    (byImage[image] = byImage[image] || []).push(type);
+  });
+  Object.keys(byImage).forEach(function (image) {
+    if (byImage[image].length > 1) {
+      note(name, 'одна картинка ' + image + ' сразу у нескольких стикеров: ' +
+                 byImage[image].join(', '));
+    }
+  });
 
   // --- Устройство уровня ---
 
@@ -236,11 +278,36 @@ Object.keys(LEVELS).forEach(function (name) {
   }
 });
 
+// --- Что осталось в папке ---
+//
+// optimize.py кладёт новые картинки, но старые не убирает: перестал
+// уровень пользоваться банкой — файл так и лежит и уезжает на сайт.
+// Игру это не ломает, поэтому просто говорим.
+
+fs.readdirSync(path.join(ROOT, 'web')).forEach(function (file) {
+  if (!/\.webp$/.test(file)) return;
+  if (!used.has('web/' + file)) {
+    note('лишнее в web/', file + ' — этой картинки никто не просит');
+  }
+});
+
 // --- Итог ---
 
+function tell(title, list) {
+  console.log(title + ':');
+  console.log('');
+  list.forEach(function (line) { console.log('  • ' + line); });
+  console.log('');
+}
+
+// Заметки печатаем всегда, но выход из-за них не портим: пусть висят
+// перед глазами, а руки дойдут когда дойдут.
+if (notes.length) {
+  tell('Стоит взглянуть, но публикации не мешает — ' + notes.length, notes);
+}
+
 if (problems.length) {
-  console.log('Нашлось, что поправить — ' + problems.length + ':\n');
-  problems.forEach(function (p) { console.log('  • ' + p); });
+  tell('Нашлось, что поправить — ' + problems.length, problems);
   process.exit(1);
 }
 
