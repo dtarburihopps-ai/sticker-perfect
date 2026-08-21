@@ -178,6 +178,7 @@ function loadLevel(name) {
   // он будет свой. Красим и страницу тоже, чтобы поля по краям совпадали.
   scene.style.background = level.wall;
   document.body.style.background = level.wall;
+  withBlur(background, level.background);
   background.src = level.background;
 
   buildDecor();
@@ -256,6 +257,35 @@ function whenIdle(fn) {
   else setTimeout(fn, 2000);
 }
 
+// --- Заглушка на время загрузки ---
+//
+// На месте картинки, которая ещё едет, показываем её же — шириной
+// в шестнадцать пикселей, из blur.js. Браузер растягивает такую
+// в мягкое цветное пятно: видно, что стикер тут будет и какой он,
+// а экран не выглядит сломанным. Пришла настоящая — пятно убираем,
+// иначе оно продолжало бы торчать из-под прозрачных краёв.
+function withBlur(img, path) {
+  // Проверяем через typeof: BLUR объявлен через const, а такие имена
+  // не становятся свойством window — window.BLUR всегда undefined,
+  // даже когда blur.js подключён.
+  if (typeof BLUR === 'undefined') return;
+
+  const tiny = BLUR[path];
+  if (!tiny) return;
+
+  // Картинка уже пришла (браузер взял её из кеша) — заглушка не нужна.
+  // Проверяем именно naturalWidth: у пустого <img>, которому ещё
+  // не задали src, complete почему-то сразу true, и одного его мало.
+  if (img.complete && img.naturalWidth) return;
+
+  img.style.backgroundImage = 'url(' + tiny + ')';
+  img.style.backgroundSize = '100% 100%';
+
+  img.addEventListener('load', function () {
+    img.style.backgroundImage = '';
+  }, { once: true });
+}
+
 function buildSlots() {
   slots = [];
   if (!level.slots) return;
@@ -277,6 +307,7 @@ function buildSlots() {
     if (kind && kind.spot) {
       outline = document.createElement('img');
       outline.className = 'spot';
+      withBlur(outline, kind.spot);
       outline.src = kind.spot;
       outline.alt = '';
       decorLayer.appendChild(outline);
@@ -434,6 +465,7 @@ function buildDecor() {
   level.decor.forEach(function (data) {
     const element = document.createElement('img');
     element.className = 'decor';
+    withBlur(element, data.image);
     element.src = data.image;
     element.alt = '';
     decorLayer.appendChild(element);
@@ -451,6 +483,7 @@ function buildOverlays() {
   level.overlays.forEach(function (data) {
     const element = document.createElement('img');
     element.className = 'overlay';
+    withBlur(element, data.image);
     element.src = data.image;
     element.alt = '';
     overlaysLayer.appendChild(element);
@@ -471,6 +504,7 @@ function createSticker(data) {
   const element = document.createElement('div');
   element.className = 'sticker';
   element.innerHTML = '<div class="sticker-body"><img src="' + image + '" alt=""></div>';
+  withBlur(element.querySelector('img'), image);
 
   // slot — место в холодильнике, spot — точка на дверце.
   // У стикера всегда занято что-то одно из двух.

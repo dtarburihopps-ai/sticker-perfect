@@ -13,10 +13,15 @@
 уровней в меню. Раньше в карточку размером с ноготь грузился фон
 холодильника целиком, на мегабайт.
 
+И blur.js — заглушки: та же картинка шириной 16 пикселей, вшитая
+прямо в код. Пока настоящая едет по сети, на её месте стоит мягкое
+пятно нужного цвета и формы.
+
 Запуск (из корня проекта):
     python tools/optimize.py
 """
 
+import base64
 import io
 import os
 import re
@@ -45,6 +50,11 @@ MAX_WIDTH = 1200
 PREVIEW_WIDTH = 240
 
 QUALITY = 88
+
+# Заглушка — та же картинка шириной 16 пикселей. Браузер растянет её
+# в мягкое цветное пятно. Все заглушки вместе весят как треть стикера.
+BLUR_WIDTH = 16
+BLUR_QUALITY = 60
 
 # Картинки не из уровней: меню, кот-маскот, разворот альбома. Число —
 # какую долю ширины сцены картинка занимает на экране.
@@ -120,6 +130,40 @@ def convert(name, fraction, out_dir, limit=None):
     return out_name, os.path.getsize(path), width, height
 
 
+def write_blur(stems):
+    """Заглушки вшиваем прямо в код, а не кладём файлами: каждая весит
+    меньше, чем запрос за ней по сети."""
+    rows = []
+    for stem in sorted(stems):
+        path = os.path.join(OUT, stem + ".webp")
+        if not os.path.isfile(path):
+            continue
+
+        img = Image.open(path)
+        height = max(1, round(img.height * BLUR_WIDTH / img.width))
+        tiny = img.resize((BLUR_WIDTH, height), Image.LANCZOS)
+
+        buf = io.BytesIO()
+        tiny.save(buf, "WEBP", quality=BLUR_QUALITY, method=6)
+        uri = "data:image/webp;base64," + base64.b64encode(buf.getvalue()).decode()
+        rows.append("  'web/%s.webp': '%s'" % (stem, uri))
+
+    head = [
+        u"// Заглушки: та же картинка шириной 16 пикселей, вшитая прямо сюда.",
+        u"// Пока настоящая едет по сети, на её месте стоит мягкое пятно",
+        u"// нужного цвета и формы — экран не выглядит сломанным.",
+        u"//",
+        u"// Файл сделан tools/optimize.py. Руками не правим: перезапишется.",
+        u"const BLUR = {",
+    ]
+    text = u"\n".join(head) + u"\n" + u",\n".join(rows) + u"\n};\n"
+
+    out = os.path.join(BASE, "blur.js")
+    with io.open(out, "w", encoding="utf-8") as f:
+        f.write(text)
+    return os.path.getsize(out), len(rows)
+
+
 def main():
     if not os.path.isdir(OUT):
         os.makedirs(OUT)
@@ -127,6 +171,7 @@ def main():
         os.makedirs(PREVIEW)
 
     fractions = widths_from_levels()
+    used = set(fractions.keys())          # то, что уровни правда показывают
     fractions.update(OVERRIDES)
 
     # Фоны уровней — из них же делаем превью для карточек в меню
@@ -155,7 +200,11 @@ def main():
         if stem in backgrounds:
             convert(name, 1.0, PREVIEW, limit=PREVIEW_WIDTH)
 
+    # Заглушки нужны и картинкам меню: кот с логотипом тоже ждут своей сети
+    blur, count = write_blur(used | set(OVERRIDES.keys()))
+
     print("\nпревью уровней: %d шт." % len(backgrounds))
+    print("заглушки: %d шт., blur.js весит %.0f КБ" % (count, blur / 1024.0))
     if unknown:
         print("не нашлись в levels.js (оставлены в полном размере): %s" % ", ".join(unknown))
     print("\nбыло %.1f МБ -> стало %.1f МБ (в %.1f раза легче)"
