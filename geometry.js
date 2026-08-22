@@ -43,7 +43,10 @@ function slotAt(x, y, type) {
   let bestDistance = Infinity;
 
   state.slots.forEach(function (slot) {
-    if (type && slot.sticker !== type) return;
+    // Место может ждать свой продукт, а может быть ничьим: полка в шкафу
+    // принимает любой товар, а за кем она закреплена, решают правила
+    // в момент постановки. Такое место подходит под любой тип.
+    if (type && slot.sticker && slot.sticker !== type) return;
 
     const rect = slotRect(slot);
     if (x < rect.left || x > rect.right || y < rect.top || y > rect.bottom) return;

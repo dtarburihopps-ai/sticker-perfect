@@ -57,20 +57,24 @@ function whyNot(sticker, slot) {
 
   if (slot.filled) return 'место занято';
 
-  if (slot.sticker !== sticker.type) return 'сюда идёт другой стикер';
+  // Место может ждать свой продукт, как в холодильнике, а может быть
+  // ничьим, как полка в шкафу: туда идёт любой товар, и кому достанется
+  // полка, решает группа ниже.
+  if (slot.sticker && slot.sticker !== sticker.type) return 'сюда идёт другой стикер';
 
   // Банка не висит в воздухе: под ней должно быть занято
   if (slot.needs && !slotById(slot.needs).filled) return 'под этим местом пусто';
 
   if (slot.group) {
-    // Тарелка занята другим продуктом: на ту, где лежит половина арбуза,
-    // кусочки уже не положить
+    // Группа закрепляется за тем продуктом, который встал в неё первым.
+    // На тарелку с половиной арбуза кусочки уже не положить, на полку
+    // с молоком не поставить печенье. Пока группа пустая — можно любой.
     const busy = occupiedBy(slot.group);
-    if (busy && busy !== sticker.type) return 'тарелка занята другим продуктом';
+    if (busy && busy !== sticker.type) return 'здесь уже другой продукт';
 
-    // Этот продукт уже разложен на другой тарелке — значит весь идёт туда
+    // Этот продукт уже разложен в другой группе — значит весь идёт туда
     const mine = groupOf(sticker.type);
-    if (mine && mine !== slot.group) return 'этот продукт уже лежит на другой тарелке';
+    if (mine && mine !== slot.group) return 'этот продукт уже стоит в другом месте';
   }
 
   return null;
@@ -81,19 +85,31 @@ function stickerIn(slot) {
   return state.stickers.filter(function (s) { return s.placed && s.slot === slot; })[0];
 }
 
-// Что лежит в этой группе мест (например, на левой тарелке)
+// Какой продукт занимает это место.
+//
+// В холодильнике продукт записан в самом месте заранее: тарелка знает,
+// что она под арбуз. На полке в шкафу место ничьё, и узнать продукт можно
+// только у стикера, который на нём стоит.
+function typeIn(slot) {
+  if (slot.sticker) return slot.sticker;
+
+  const sticker = stickerIn(slot);
+  return sticker ? sticker.type : null;
+}
+
+// Что лежит в этой группе мест (например, на левой тарелке или на полке)
 function occupiedBy(group) {
   const taken = state.slots.filter(function (s) {
     return s.group === group && s.filled;
   })[0];
 
-  return taken ? taken.sticker : null;
+  return taken ? typeIn(taken) : null;
 }
 
 // В какой группе уже лежит этот продукт
 function groupOf(type) {
   const taken = state.slots.filter(function (s) {
-    return s.group && s.filled && s.sticker === type;
+    return s.group && s.filled && typeIn(s) === type;
   })[0];
 
   return taken ? taken.group : null;

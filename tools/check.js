@@ -113,6 +113,12 @@ names.forEach(function (name) {
     if (slot.x === undefined || slot.bottom === undefined) {
       complain(name, 'у места «' + slot.id + '» нет координат x и bottom');
     }
+    // Место без своего продукта — ничьё: полка в шкафу, гнездо карандаша.
+    // Размер такому месту взять неоткуда, кроме slotSize уровня, и без
+    // него игра упадёт в первый же тап по сцене.
+    if (!slot.sticker && !level.slotSize) {
+      complain(name, 'место «' + slot.id + '» ничьё, а slotSize у уровня не задан');
+    }
   });
 
   (level.tray || []).forEach(function (item) {
